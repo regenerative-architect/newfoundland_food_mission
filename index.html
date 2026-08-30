@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<!--
+  NL FOOD SOVEREIGNTY ORCHARD MISSION — Cascade Edition v2.1
+  Zero-Harm & Anti-Inversion: No telemetry · No external calls · No tracking
+  All data stored locally in IndexedDB only · User-resettable · Offline-first
+  No legal planting permissions granted or implied.
+-->
+<html lang="en-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NL Orchard Mission — Cascade Edition</title>
+<style>
+:root{
+  --bg0:#030608;--bg1:#06100a;--card:rgba(5,14,8,.86);--card2:rgba(8,20,12,.95);
+  --bdr:rgba(74,222,128,.14);--bdr2:rgba(74,222,128,.38);
+  --g1:#4ade80;--g2:#86efac;--c1:#22d3ee;--a1:#f59e0b;--r1:#fb7185;--v1:#a78bfa;
+  --tx:#e2e8f0;--tx2:#94a3b8;--tx3:#4b5563;
+  --fh:Georgia,'Times New Roman',serif;
+  --fb:'Palatino Linotype',Palatino,Georgia,serif;
+  --fu:Verdana,Geneva,Tahoma,sans-serif;
+  --fm:'Courier New',Courier,monospace;
+  --rad:8px;--radl:16px;
+  --shc:0 4px 28px rgba(0,0,0,.5);--shg:0 0 24px rgba(74,222,128,.13);
+  --tr:.28s ease;--navh:52px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg0);color:var(--tx);line-height:1.7;min-height:100vh;overflow-x:hidden}
+button,select,input,textarea{font-family:inherit}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9000;background:radial-gradient(ellipse at 50% 38%,#071a0c,#020507 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .9s ease,visibility .9s ease}
+#splash.gone{opacity:0;visibility:hidden;pointer-events:none}
+.spl-ring{width:150px;height:150px;border-radius:50%;position:relative;border:1.5px solid rgba(74,222,128,.22);animation:orb 3s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
+.spl-ring::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(34,211,238,.16);animation:orb 4.5s ease-in-out infinite reverse}
+.spl-ico{font-size:3.2rem;filter:drop-shadow(0 0 14px #4ade80);animation:pulse 2.5s ease-in-out infinite}
+.spl-title{margin-top:1.5rem;font-family:var(--fh);font-size:clamp(1.1rem,3vw,1.7rem);font-weight:bold;color:var(--g1);text-align:center;text-shadow:0 0 28px rgba(74,222,128,.42)}
+.spl-sub{margin-top:.4rem;font-family:var(--fu);font-size:.72rem;color:var(--tx2);letter-spacing:.18em;text-transform:uppercase;text-align:center}
+.spl-bar{margin-top:1.5rem;width:170px;height:2px;background:rgba(74,222,128,.1);border-radius:99px;overflow:hidden}
+.spl-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--g1),var(--c1));animation:sload 2.4s ease forwards}
+@keyframes orb{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.05);opacity:1}}
+@keyframes pulse{0%,100%{filter:drop-shadow(0 0 12px #4ade80)}50%{filter:drop-shadow(0 0 24px #4ade80)}}
+@keyframes sload{from{width:0}to{width:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CANVAS */
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+#floatLayer{position:fixed;inset:0;z-index:500;pointer-events:none;overflow:hidden}
+.fl-num{position:absolute;font-family:var(--fm);font-size:.76rem;font-weight:bold;pointer-events:none;animation:floatUp 1.9s ease forwards;white-space:nowrap}
+@keyframes floatUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-50px)}}
+
+/* HUD */
+#hud{position:fixed;bottom:16px;left:16px;z-index:300;background:rgba(3,8,5,.93);backdrop-filter:blur(10px);border:1px solid var(--bdr);border-radius:var(--radl);padding:.75rem 1rem;min-width:170px;font-family:var(--fu);font-size:.68rem;box-shadow:var(--shc),var(--shg)}
+.hud-title{color:var(--g1);font-weight:bold;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem;text-align:center;font-size:.64rem}
+.hud-row{display:flex;justify-content:space-between;margin-bottom:.28rem;color:var(--tx2)}
+.hud-val{color:var(--g1);font-weight:bold}
+.hud-bar{background:rgba(255,255,255,.05);border-radius:99px;height:2px;margin:.18rem 0;overflow:hidden}
+.hud-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--g1),var(--c1));transition:width .5s ease}
+.hud-badges{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:3px}
+.h-bdg{font-size:.54rem;background:rgba(74,222,128,.07);border:1px solid var(--bdr);border-radius:99px;padding:.1rem .35rem;color:var(--tx3)}
+.h-bdg.on{background:rgba(74,222,128,.16);border-color:var(--g1);color:var(--g1)}
+
+/* CONSTELLATION */
+#conWrap{position:fixed;bottom:16px;right:16px;z-index:300;width:120px;height:120px;border-radius:50%;border:1px solid rgba(74,222,128,.18);background:rgba(3,8,5,.85);backdrop-filter:blur(8px);overflow:hidden;box-shadow:0 0 22px rgba(74,222,128,.08)}
+#conCvs{width:100%;height:100%}
+
+/* CASCADE POPUP */
+#cpop{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:600;pointer-events:none;display:none}
+.cpop-box{background:rgba(4,12,8,.96);border:1px solid var(--g1);border-radius:var(--radl);padding:.75rem 1.2rem;text-align:center;box-shadow:var(--shg);animation:fadeUp .4s ease}
+.cpop-nm{font-family:var(--fh);font-size:.9rem;color:var(--g1);margin-bottom:.22rem}
+.cpop-chain{font-family:var(--fm);font-size:.65rem;color:var(--c1);margin-bottom:.38rem}
+.cpop-effs{display:flex;gap:.55rem;justify-content:center;flex-wrap:wrap}
+.cpop-eff{font-family:var(--fu);font-size:.7rem;color:var(--g2)}
+
+/* SPECIES MODAL */
+#spModal{position:fixed;inset:0;z-index:700;background:rgba(2,4,6,.85);display:none;align-items:center;justify-content:center;padding:1rem}
+#spModal.show{display:flex}
+.spm-box{background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--radl);padding:1.4rem;max-width:460px;width:100%;box-shadow:var(--shg),var(--shc)}
+.spm-head{display:flex;align-items:flex-start;gap:.7rem;margin-bottom:.85rem}
+.spm-ico{font-size:1.8rem}
+.spm-nm{font-family:var(--fh);font-size:1rem;color:var(--tx)}
+.spm-lat{font-family:var(--fb);font-size:.68rem;color:var(--tx3);font-style:italic}
+.spm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin:.75rem 0;font-family:var(--fu);font-size:.66rem}
+.spm-stat{background:rgba(5,14,8,.8);border:1px solid var(--bdr);border-radius:var(--rad);padding:.38rem .5rem;text-align:center}
+.spm-sv{color:var(--g1);font-weight:bold;font-size:.78rem;display:block}
+.spm-sl{color:var(--tx3);font-size:.57rem;text-transform:uppercase}
+.spm-desc{font-family:var(--fu);font-size:.72rem;color:var(--tx2);margin:.65rem 0;line-height:1.55}
+.spm-syn-t{font-family:var(--fu);font-size:.6rem;color:var(--c1);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.38rem}
+.spm-syn{font-family:var(--fu);font-size:.68rem;color:var(--tx2);padding:.22rem 0;border-bottom:1px solid var(--bdr)}
+.spm-syn b{color:var(--g1)}
+.spm-btns{display:flex;gap:.5rem;margin-top:.9rem;flex-wrap:wrap}
+
+/* EVENT OVERLAY */
+#evtOverlay{position:fixed;inset:0;z-index:800;background:rgba(2,4,6,.88);display:none;align-items:center;justify-content:center;padding:1rem}
+#evtOverlay.show{display:flex}
+.evt-box{background:var(--card2);border:1px solid var(--bdr2);border-radius:20px;padding:1.6rem;max-width:520px;width:100%;box-shadow:var(--shg),var(--shc)}
+.evt-hdr{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.evt-ico{font-size:1.9rem}
+.evt-yr{font-family:var(--fu);font-size:.6rem;color:var(--a1);text-transform:uppercase;letter-spacing:.1em}
+.evt-nm{font-family:var(--fh);font-size:1.1rem;color:var(--tx);margin-top:.18rem}
+.evt-desc{font-family:var(--fu);font-size:.76rem;color:var(--tx2);line-height:1.6;margin-bottom:1.2rem}
+.evt-choices{display:flex;flex-direction:column;gap:.5rem}
+.evt-choice{padding:.6rem .85rem;border-radius:var(--rad);border:1px solid var(--bdr);background:rgba(6,16,10,.6);font-family:var(--fu);font-size:.72rem;color:var(--tx2);cursor:pointer;transition:var(--tr);text-align:left;width:100%}
+.evt-choice:hover{border-color:var(--g1);color:var(--tx);background:rgba(74,222,128,.07)}
+.evt-choice b{color:var(--tx);display:block;margin-bottom:.18rem}
+
+/* NAV */
+#nav{position:sticky;top:0;z-index:200;background:rgba(3,6,8,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr);height:var(--navh);display:flex;align-items:center;padding:0 1rem;gap:0;overflow-x:auto;scrollbar-width:none}
+#nav::-webkit-scrollbar{display:none}
+.nav-logo{font-family:var(--fh);font-size:.88rem;font-weight:bold;color:var(--g1);white-space:nowrap;margin-right:1rem;flex-shrink:0;cursor:pointer}
+.nav-links{display:flex;list-style:none;flex-shrink:0}
+.nav-links a{display:block;padding:.28rem .55rem;font-family:var(--fu);font-size:.65rem;color:var(--tx2);text-decoration:none;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;border-radius:var(--rad);transition:var(--tr)}
+.nav-links a:hover{color:var(--g1);background:rgba(74,222,128,.08)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:.4rem;flex-shrink:0}
+#srch{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.26rem .6rem;color:var(--tx);font-family:var(--fu);font-size:.72rem;width:140px;outline:none;transition:var(--tr)}
+#srch:focus{border-color:var(--g1);width:190px}
+#srch::placeholder{color:var(--tx3)}
+
+/* APP */
+#app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 1rem}
+
+/* HERO */
+.hero{padding:3.5rem 0 2rem;text-align:center}
+.hero-tag{display:inline-block;font-family:var(--fu);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--c1);border:1px solid rgba(34,211,238,.28);border-radius:99px;padding:.24rem .8rem;margin-bottom:1.2rem}
+.hero-h{font-family:var(--fh);font-size:clamp(1.7rem,5vw,2.8rem);font-weight:bold;line-height:1.1;color:#fff;margin-bottom:.85rem}
+.hero-h span{color:var(--g1)}
+.hero-p{font-size:.97rem;color:var(--tx2);max-width:620px;margin:0 auto 1.6rem;line-height:1.8}
+.hero-stats{display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.hs-n{font-family:var(--fh);font-size:1.8rem;color:var(--g1);display:block}
+.hs-l{font-family:var(--fu);font-size:.66rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em}
+.btn-row{display:flex;justify-content:center;gap:.55rem;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.4rem .8rem;border-radius:var(--rad);border:1px solid var(--bdr);background:transparent;color:var(--tx2);font-family:var(--fu);font-size:.7rem;cursor:pointer;transition:var(--tr)}
+.btn:hover{border-color:var(--g1);color:var(--g1);background:rgba(74,222,128,.06)}
+.btn-p{background:rgba(74,222,128,.1);border-color:var(--g1);color:var(--g1)}
+.btn-p:hover{background:rgba(74,222,128,.2)}
+.btn-c{border-color:var(--c1);color:var(--c1)}
+.btn-c:hover{background:rgba(34,211,238,.1)}
+.btn-a{border-color:var(--a1);color:var(--a1)}
+.btn-a:hover{background:rgba(245,158,11,.1)}
+.btn-d{border-color:var(--r1);color:var(--r1)}
+.btn-d:hover{background:rgba(251,113,133,.1)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* SECTIONS */
+.cs{margin-bottom:1rem;border-radius:var(--radl);overflow:hidden;border:1px solid var(--bdr);background:var(--card);box-shadow:var(--shc);transition:var(--tr)}
+.cs:hover{border-color:rgba(74,222,128,.22);box-shadow:var(--shc),var(--shg)}
+.cs-det{width:100%}
+.cs-sum{padding:.95rem 1.2rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;list-style:none;user-select:none;transition:var(--tr)}
+.cs-sum::-webkit-details-marker,.cs-sum::marker{display:none}
+.cs-sum:hover{background:rgba(74,222,128,.03)}
+.cs-ico{font-size:1.15rem;flex-shrink:0}
+.cs-tw{flex:1}
+.cs-t{font-family:var(--fh);font-size:.97rem;color:var(--tx)}
+.cs-d{font-family:var(--fu);font-size:.62rem;color:var(--tx3);margin-top:.1rem}
+.cs-chv{color:var(--tx3);font-size:.8rem;flex-shrink:0;transition:transform .3s}
+details[open]>.cs-sum>.cs-chv{transform:rotate(90deg)}
+.cs-body{padding:0 1.2rem 1.2rem;border-top:1px solid var(--bdr)}
+.cs-body h3{font-family:var(--fh);font-size:.92rem;color:var(--g1);margin:1.1rem 0 .4rem;padding-bottom:.22rem;border-bottom:1px solid var(--bdr)}
+.cs-body h4{font-family:var(--fh);font-size:.86rem;color:var(--c1);margin:.85rem 0 .28rem}
+.cs-body p{margin:.55rem 0;color:var(--tx2);font-size:.86rem}
+.cs-body ul,.cs-body ol{margin:.55rem 0 .55rem 1.2rem;color:var(--tx2);font-size:.83rem}
+.cs-body li{margin-bottom:.24rem}
+.cs-body strong{color:var(--tx)}
+.cs-body em{color:var(--g2)}
+
+/* TABLES */
+.tw{overflow-x:auto;margin:.7rem 0;border-radius:var(--rad)}
+.tbl{width:100%;border-collapse:collapse;font-family:var(--fu);font-size:.7rem}
+.tbl th{background:rgba(74,222,128,.07);color:var(--g1);padding:.48rem .65rem;border-bottom:1px solid var(--bdr2);text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.tbl td{padding:.42rem .65rem;border-bottom:1px solid var(--bdr);color:var(--tx2);vertical-align:top}
+.tbl tr:hover td{background:rgba(74,222,128,.02)}
+.t-ok{color:var(--g1)}.t-caut{color:var(--a1)}.t-bad{color:var(--r1)}
+
+/* BADGES */
+.b{display:inline-block;padding:.09rem .4rem;border-radius:99px;font-family:var(--fu);font-size:.6rem;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;margin:0 .1rem}
+.bg{background:rgba(74,222,128,.12);color:var(--g1);border:1px solid rgba(74,222,128,.26)}
+.bc{background:rgba(34,211,238,.1);color:var(--c1);border:1px solid rgba(34,211,238,.26)}
+.ba{background:rgba(245,158,11,.1);color:var(--a1);border:1px solid rgba(245,158,11,.26)}
+.br{background:rgba(251,113,133,.1);color:var(--r1);border:1px solid rgba(251,113,133,.26)}
+.bv{background:rgba(167,139,250,.1);color:var(--v1);border:1px solid rgba(167,139,250,.26)}
+
+/* INFO BOXES */
+.ibox{background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.2);border-radius:var(--rad);padding:.55rem .85rem;margin:.55rem 0;font-family:var(--fu);font-size:.72rem;color:var(--c1);line-height:1.55}
+.cbox{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.22);border-radius:var(--rad);padding:.55rem .85rem;margin:.55rem 0;font-family:var(--fu);font-size:.72rem;color:var(--a1);line-height:1.55}
+.dbox{background:rgba(251,113,133,.05);border:1px solid rgba(251,113,133,.22);border-radius:var(--rad);padding:.55rem .85rem;margin:.55rem 0;font-family:var(--fu);font-size:.72rem;color:var(--r1);line-height:1.55}
+
+/* GAME WIDGETS */
+.widget{background:var(--card2);border:1px solid var(--bdr);border-radius:var(--radl);padding:1rem;margin:.75rem 0}
+
+/* Resource bar */
+#resBar{background:rgba(3,6,8,.9);border:1px solid var(--bdr);border-radius:var(--radl);padding:.6rem .95rem;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;font-family:var(--fu);font-size:.66rem;margin:.7rem 0}
+.ri{display:flex;align-items:center;gap:.32rem;color:var(--tx2)}
+.rl{color:var(--tx3);font-size:.58rem;text-transform:uppercase;letter-spacing:.06em}
+.rv{color:var(--g1);font-weight:bold;font-size:.76rem}
+.rbw{width:42px;height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.rb{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--g1),var(--c1));transition:width .5s ease}
+.ri.warn .rv{color:var(--a1)}.ri.crit .rv{color:var(--r1)}
+.sov-d{margin-left:auto;font-family:var(--fh);font-size:.85rem;color:var(--g1);font-weight:bold}
+
+/* Scenario cards */
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.7rem;margin:.75rem 0}
+.scen-card{background:rgba(5,14,8,.7);border:1px solid var(--bdr);border-radius:var(--radl);padding:.9rem;cursor:pointer;transition:var(--tr)}
+.scen-card:hover{border-color:var(--bdr2);transform:translateY(-2px);box-shadow:var(--shg)}
+.scen-card.sel{border-color:var(--g1);background:rgba(74,222,128,.07)}
+.sc-ico{font-size:1.5rem;margin-bottom:.45rem}
+.sc-nm{font-family:var(--fh);font-size:.88rem;color:var(--tx);margin-bottom:.18rem}
+.sc-role{font-family:var(--fu);font-size:.6rem;color:var(--c1);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.sc-desc{font-family:var(--fu);font-size:.7rem;color:var(--tx2);line-height:1.5;margin-bottom:.45rem}
+.sc-bonus{font-family:var(--fu);font-size:.63rem;color:var(--a1)}
+
+/* Orchard */
+#orchWrap{display:grid;grid-template-columns:1fr 250px;gap:.9rem}
+#orchCvs{width:100%;aspect-ratio:1;border-radius:var(--radl);border:1px solid var(--bdr);background:rgba(3,8,5,.85);cursor:crosshair;display:block;max-width:400px}
+.sp-panel-t{font-family:var(--fu);font-size:.64rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;padding-bottom:.32rem;border-bottom:1px solid var(--bdr)}
+.sp-cat{margin-bottom:.75rem}
+.sp-cat-nm{font-family:var(--fu);font-size:.6rem;color:var(--c1);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.28rem}
+.sp-item{display:flex;align-items:center;gap:.42rem;padding:.32rem .5rem;border-radius:var(--rad);border:1px solid var(--bdr);background:rgba(5,12,8,.6);cursor:pointer;transition:var(--tr);font-family:var(--fu);font-size:.68rem;color:var(--tx2);margin-bottom:2px}
+.sp-item:hover{border-color:var(--g1);color:var(--tx);background:rgba(74,222,128,.05)}
+.sp-item.sel{border-color:var(--g1);background:rgba(74,222,128,.1);color:var(--g1)}
+.sp-item.locked{opacity:.35;cursor:not-allowed}
+.sp-cost{margin-left:auto;color:var(--a1);font-size:.6rem}
+.clog{margin-top:.7rem;background:rgba(3,8,5,.7);border:1px solid var(--bdr);border-radius:var(--rad);padding:.6rem;max-height:170px;overflow-y:auto}
+.clog-t{font-family:var(--fu);font-size:.6rem;color:var(--g1);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.38rem}
+.cl-e{font-family:var(--fm);font-size:.62rem;padding:.2rem 0;border-bottom:1px solid rgba(74,222,128,.06);color:var(--tx2)}
+.cl-e.cascade{color:var(--g1)}.cl-e.event{color:var(--a1)}.cl-e.achieve{color:var(--v1)}
+.node-info{font-family:var(--fu);font-size:.64rem;color:var(--tx3);margin-top:.45rem}
+.node-info span{color:var(--c1)}
+
+/* Research */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:.6rem;margin:.75rem 0}
+.res-card{background:rgba(5,14,8,.7);border:1px solid var(--bdr);border-radius:var(--rad);padding:.8rem;transition:var(--tr)}
+.res-card.unlocked{border-color:rgba(74,222,128,.38);background:rgba(74,222,128,.05)}
+.res-card.available{border-color:rgba(34,211,238,.28)}
+.res-card.locked{opacity:.35}
+.rc-tier{font-family:var(--fu);font-size:.56rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.28rem}
+.rc-nm{font-family:var(--fh);font-size:.82rem;color:var(--tx);margin-bottom:.3rem}
+.rc-nm.unlocked{color:var(--g1)}
+.rc-desc{font-family:var(--fu);font-size:.66rem;color:var(--tx2);line-height:1.5;margin-bottom:.55rem}
+.rc-cost{font-family:var(--fu);font-size:.63rem;color:var(--a1);margin-bottom:.45rem}
+
+/* Achievements */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:.48rem}
+.ach-card{background:rgba(5,12,8,.7);border:1px solid var(--bdr);border-radius:var(--rad);padding:.6rem;text-align:center;transition:var(--tr)}
+.ach-card.earned{border-color:rgba(167,139,250,.36);background:rgba(167,139,250,.06)}
+.ach-ico{font-size:1.25rem;margin-bottom:.22rem;filter:grayscale(1);opacity:.32}
+.ach-card.earned .ach-ico{filter:none;opacity:1}
+.ach-nm{font-family:var(--fu);font-size:.64rem;color:var(--tx3);font-weight:bold}
+.ach-card.earned .ach-nm{color:var(--v1)}
+.ach-desc{font-family:var(--fu);font-size:.57rem;color:var(--tx3);margin-top:.16rem;line-height:1.4}
+
+/* Advisor */
+.adv-wrap{background:rgba(5,12,8,.7);border:1px solid rgba(74,222,128,.18);border-radius:var(--rad);padding:.75rem}
+.adv-key-row{display:flex;gap:.42rem;margin-bottom:.5rem;align-items:center;flex-wrap:wrap}
+.adv-key-inp{flex:1;min-width:130px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.28rem .52rem;color:var(--tx);font-family:var(--fu);font-size:.68rem;outline:none}
+.adv-key-inp:focus{border-color:var(--g1)}
+.adv-key-inp::placeholder{color:var(--tx3)}
+.adv-q{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.42rem .62rem;color:var(--tx);font-family:var(--fu);font-size:.72rem;resize:vertical;min-height:52px;outline:none;transition:var(--tr);margin-bottom:.42rem}
+.adv-q:focus{border-color:var(--g1)}
+.adv-response{background:rgba(74,222,128,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.6rem .82rem;font-family:var(--fu);font-size:.71rem;color:var(--tx2);min-height:58px;line-height:1.6;max-height:190px;overflow-y:auto;white-space:pre-wrap}
+
+/* Notes */
+#noteInp{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.55rem;color:var(--tx);font-family:var(--fu);font-size:.76rem;resize:vertical;min-height:64px;outline:none;transition:var(--tr)}
+#noteInp:focus{border-color:var(--g1)}
+.note-entry{background:rgba(6,14,8,.6);border:1px solid var(--bdr);border-radius:var(--rad);padding:.55rem;margin-bottom:.38rem}
+.note-date{font-family:var(--fu);font-size:.58rem;color:var(--tx3);margin-bottom:.22rem}
+.note-text{font-family:var(--fu);font-size:.71rem;color:var(--tx2)}
+
+/* Settings */
+.set-lbl{font-family:var(--fu);font-size:.72rem;color:var(--tx2);display:block;margin-bottom:.22rem}
+.set-inp{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--rad);padding:.32rem .52rem;color:var(--tx);font-family:var(--fu);font-size:.74rem;outline:none;width:100%;max-width:300px}
+.set-inp:focus{border-color:var(--g1)}
+
+/* Scroll reveal */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.rv.vis{opacity:1;transform:translateY(0)}
+
+/* Search hide */
+.srch-hide{display:none!important}
+
+/* Section header */
+.guide-header{padding:1.3rem 0 .45rem}
+.guide-header h2{font-family:var(--fh);font-size:1.35rem;color:var(--g1);text-shadow:0 0 18px rgba(74,222,128,.3)}
+.guide-header p{font-family:var(--fu);font-size:.74rem;color:var(--tx2);margin-top:.38rem}
+
+/* Footer */
+footer{margin-top:2.5rem;padding:1.6rem 0;border-top:1px solid var(--bdr);font-family:var(--fu);font-size:.68rem;color:var(--tx3);text-align:center;position:relative;z-index:1}
+.zh-box{background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.16);border-radius:var(--rad);padding:.75rem 1rem;margin:0 auto 1.1rem;text-align:left;color:var(--tx2);font-size:.7rem;line-height:1.6;max-width:860px}
+.zh-box strong{color:var(--g1)}
+
+/* Noscript */
+.noscript-warn{margin:2rem;padding:1.5rem;background:#180f00;border:2px solid #f59e0b;border-radius:12px;color:#f59e0b;font-family:Verdana,sans-serif;font-size:.88rem;text-align:center}
+
+/* Print */
+@media print{
+  #splash,#hud,#conWrap,#bgCanvas,#nav,#floatLayer,#cpop,#evtOverlay,#spModal,button,.btn-row{display:none!important}
+  body{background:#fff;color:#111;font-size:10.5pt}
+  .cs{border:1pt solid #ccc;page-break-inside:avoid}
+  .cs-body{display:block!important}
+  .rv{opacity:1;transform:none}
+  @page{margin:.7in}
+}
+@media(max-width:768px){
+  #hud,#conWrap{display:none}
+  #orchWrap{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<!-- Zero-Harm: No telemetry · No tracking · No external calls · Local-only · User-resettable -->
+
+<noscript>
+<div class="noscript-warn">⚠ <strong>JavaScript required</strong> for the cascade simulator, orchard engine, and local storage. Educational content (tables, species lists, guides) is readable with JS enabled.</div>
+</noscript>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div id="floatLayer" aria-hidden="true"></div>
+
+<!-- SPLASH -->
+<div id="splash" role="status">
+  <div class="spl-ring"><span class="spl-ico">🌿</span></div>
+  <div class="spl-title">NL Food Sovereignty<br>Orchard Mission</div>
+  <div class="spl-sub">Cascade Edition v2.1</div>
+  <div class="spl-bar"><div class="spl-fill"></div></div>
+</div>
+
+<!-- HUD -->
+<aside id="hud" role="complementary" aria-label="Mission HUD">
+  <div class="hud-title">🌿 Mission HUD</div>
+  <div class="hud-row"><span>Planted</span><span class="hud-val" id="hudPlanted">0/12</span></div>
+  <div class="hud-bar"><div class="hud-fill" id="hudPlantedB" style="width:0%"></div></div>
+  <div class="hud-row"><span>Cascades</span><span class="hud-val" id="hudCascades">0</span></div>
+  <div class="hud-row"><span>Sections Read</span><span class="hud-val" id="hudSections">0/18</span></div>
+  <div class="hud-row"><span>Sovereignty</span><span class="hud-val" id="hudSov">0</span></div>
+  <div class="hud-bar"><div class="hud-fill" id="hudSovB" style="width:0%"></div></div>
+  <div class="hud-badges">
+    <span class="h-bdg" id="b-reader">📖 Reader</span>
+    <span class="h-bdg" id="b-planter">🌱 Planter</span>
+    <span class="h-bdg" id="b-cascader">⚡ Cascader</span>
+    <span class="h-bdg" id="b-sovereign">🏆 Sovereign</span>
+  </div>
+</aside>
+
+<!-- CONSTELLATION -->
+<div id="conWrap" title="Knowledge constellation" aria-hidden="true">
+  <canvas id="conCvs" width="120" height="120"></canvas>
+</div>
+
+<!-- CASCADE POPUP -->
+<div id="cpop" aria-live="polite">
+  <div class="cpop-box">
+    <div class="cpop-nm" id="cpopNm"></div>
+    <div class="cpop-chain" id="cpopChain"></div>
+    <div class="cpop-effs" id="cpopEffs"></div>
+  </div>
+</div>
+
+<!-- SPECIES MODAL -->
+<div id="spModal" role="dialog" aria-modal="true" aria-label="Species details">
+  <div class="spm-box">
+    <div class="spm-head">
+      <span class="spm-ico" id="spmIco"></span>
+      <div><div class="spm-nm" id="spmNm"></div><div class="spm-lat" id="spmLat"></div></div>
+    </div>
+    <div class="spm-stats" id="spmStats"></div>
+    <div class="spm-desc" id="spmDesc"></div>
+    <div class="spm-syn-t">⚡ Cascade Synergies</div>
+    <div id="spmSyn"></div>
+    <div class="spm-btns">
+      <button class="btn btn-p" id="spmPlantBtn" onclick="confirmPlant()">🌱 Plant</button>
+      <button class="btn" onclick="closeSpModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT OVERLAY -->
+<div id="evtOverlay" role="dialog" aria-modal="true">
+  <div class="evt-box">
+    <div class="evt-hdr">
+      <span class="evt-ico" id="evtIco">⚡</span>
+      <div><div class="evt-yr" id="evtYr"></div><div class="evt-nm" id="evtNm"></div></div>
+    </div>
+    <div class="evt-desc" id="evtDesc"></div>
+    <div class="evt-choices" id="evtChoices"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <span class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">🌿 NL Orchard Mission</span>
+  <ul class="nav-links">
+    <li><a href="#mission" onclick="return goSection('mission')">Mission</a></li>
+    <li><a href="#orchard" onclick="return goSection('orchard')">Orchard</a></li>
+    <li><a href="#guide" onclick="return goSection('guide')">Field Guide</a></li>
+    <li><a href="#research" onclick="return goSection('research')">Research</a></li>
+    <li><a href="#chronicles" onclick="return goSection('chronicles')">Chronicles</a></li>
+    <li><a href="#logbook" onclick="return goSection('logbook')">Logbook</a></li>
+    <li><a href="#settings-sec" onclick="return goSection('settings-sec')">Settings</a></li>
+  </ul>
+  <div class="nav-right">
+    <input type="search" id="srch" placeholder="🔍 Search…" aria-label="Search content" oninput="doSearch(this.value)">
+    <button class="btn" onclick="expData()" title="Export data">⬇️</button>
+    <button class="btn btn-d" onclick="resetAll()" title="Reset all data">🗑</button>
+  </div>
+</nav>
+
+<div id="app">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">Province-Wide Blueprint · Cascade Edition · 2026–2126 · Offline-First</div>
+  <h1 class="hero-h">Newfoundland Food Sovereignty<br><span>Orchard Mission</span></h1>
+  <p class="hero-p">A practical mission dashboard and cascade simulator for citizens, schools, councils, farms, and community groups establishing resilient fruit systems across Newfoundland and Labrador.</p>
+  <div class="hero-stats">
+    <div><span class="hs-n">9</span><span class="hs-l">Regions Mapped</span></div>
+    <div><span class="hs-n">6</span><span class="hs-l">Scenarios</span></div>
+    <div><span class="hs-n">20+</span><span class="hs-l">Species</span></div>
+    <div><span class="hs-n">15</span><span class="hs-l">Cascade Chains</span></div>
+    <div><span class="hs-n">100yr</span><span class="hs-l">Vision</span></div>
+    <div><span class="hs-n">∞</span><span class="hs-l">Offline-Ready</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p" onclick="window.print()">🖨️ Print Procurement Sheet</button>
+    <button class="btn btn-a" onclick="expData()">⬇️ Export My Data</button>
+    <label class="btn" style="cursor:pointer">⬆️ Import<input type="file" id="impFile" accept=".json" style="display:none" onchange="impData(this)"></label>
+  </div>
+</section>
+
+
+<!-- MISSION CONTROL -->
+<div id="mission" class="rv">
+<div class="cs">
+  <details class="cs-det" open>
+    <summary class="cs-sum" onclick="markRead('mission')">
+      <span class="cs-ico">🎯</span>
+      <div class="cs-tw"><div class="cs-t">Mission Control — Choose Your Role &amp; Start</div><div class="cs-d">Scenario selection, region, and live resource dashboard</div></div>
+      <span class="cs-chv">▶</span>
+    </summary>
+    <div class="cs-body">
+      <p>Select your scenario to set starting resources, available species, and victory conditions. Choose your NL region. The orchard simulator activates on launch.</p>
+      <div class="ibox">🎮 <strong>How to play:</strong> (1) Select a scenario + region below. (2) Click "Plant the First Seed". (3) In the Orchard section, select a species from the panel, then click an orchard node to plant. (4) Adjacent compatible species trigger <strong>cascade collisions</strong> — named ecological chains that multiply your resources. (5) Advance seasons to earn Knowledge Points, unlock Research, and trigger events.</div>
+      <h3>Choose Your Scenario</h3>
+      <div class="scen-grid" id="scenGrid"></div>
+      <h3>Choose Your Region</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.45rem;margin:.55rem 0" id="rgnGrid"></div>
+      <div style="margin-top:.9rem;display:flex;gap:.55rem;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-p" id="launchBtn" onclick="launchGame()" disabled>▶ Plant the First Seed</button>
+        <span style="font-family:var(--fu);font-size:.66rem;color:var(--tx3)">Select a scenario and region above to activate</span>
+      </div>
+      <h3>Live Resource Dashboard</h3>
+      <div id="resBar">
+        <div class="ri"><span>🌱</span><div><div class="rl">Seeds</div><div class="rv" id="rv-seeds">—</div></div></div>
+        <div class="ri"><span>🪱</span><div><div class="rl">Soil</div><div class="rv" id="rv-soil">—</div><div class="rbw"><div class="rb" id="rb-soil" style="width:0%"></div></div></div></div>
+        <div class="ri"><span>🐝</span><div><div class="rl">Pollinator</div><div class="rv" id="rv-poll">—</div><div class="rbw"><div class="rb" id="rb-poll" style="width:0%"></div></div></div></div>
+        <div class="ri"><span>💧</span><div><div class="rl">Water</div><div class="rv" id="rv-water">—</div><div class="rbw"><div class="rb" id="rb-water" style="width:0%"></div></div></div></div>
+        <div class="ri"><span>🤝</span><div><div class="rl">Community</div><div class="rv" id="rv-comm">—</div><div class="rbw"><div class="rb" id="rb-comm" style="width:0%"></div></div></div></div>
+        <div class="ri"><span>📚</span><div><div class="rl">Know. Pts</div><div class="rv" id="rv-kp">—</div></div></div>
+        <div class="sov-d">🌟 <span id="rv-sov">0</span></div>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.65rem">
+        <span style="font-family:var(--fu);font-size:.68rem;color:var(--tx2)">Year <strong id="yearD" style="color:var(--g1)">1</strong> · <strong id="seasonD" style="color:var(--c1)">Spring</strong></span>
+        <button class="btn btn-c" id="seasonBtn" onclick="advanceSeason()" disabled>⏩ Advance Season</button>
+      </div>
+    </div>
+  </details>
+</div>
+</div>
+
+<!-- ORCHARD SIMULATOR -->
+<div id="orchard" class="rv">
+<div class="cs">
+  <details class="cs-det" open>
+    <summary class="cs-sum" onclick="markRead('orchard')">
+      <span class="cs-ico">🌱</span>
+      <div class="cs-tw"><div class="cs-t">Orchard Simulator — Cascade Collider</div><div class="cs-d">Plant species on the 12-node grid · trigger cascade chains · watch your ecosystem evolve</div></div>
+      <span class="cs-chv">▶</span>
+    </summary>
+    <div class="cs-body">
+      <div class="ibox">⚡ <strong>Cascade Collider:</strong> Adjacent compatible species trigger named cascade chains. A chain like "Nitrogen Cascade" (alder + any fruit) fires soil enrichment → root uptake → yield boost, giving resource bonuses and Knowledge Points. Multi-species adjacency produces multiple simultaneous cascades. The more diverse your orchard, the more cascades fire.</div>
+      <div id="orchWrap">
+        <div>
+          <canvas id="orchCvs" aria-label="Interactive 12-node orchard grid — select species then click node to plant"></canvas>
+          <div class="clog">
+            <div class="clog-t">⚡ Cascade Log</div>
+            <div id="clogEntries"><div class="cl-e" style="color:var(--tx3)">Launch the mission to begin cascade tracking…</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="sp-panel-t">🌿 Species Panel — select then click node</div>
+          <div id="spPanel"><div style="font-family:var(--fu);font-size:.7rem;color:var(--tx3)">Start the mission to unlock species.</div></div>
+          <div class="node-info">Selected: <span id="nodeInfo">none</span></div>
+          <button class="btn btn-d" style="margin-top:.45rem;width:100%;font-size:.66rem" onclick="removePlant()">🗑 Remove Plant at Node</button>
+        </div>
+      </div>
+    </div>
+  </details>
+</div>
+</div>
+
+<!-- FIELD GUIDE HEADER -->
+<div id="guide" class="guide-header rv">
+  <h2>📖 Field Guide — Evidence-Based Reference</h2>
+  <p>All 18 sections below. Opening each section earns Knowledge Points and illuminates a node in your constellation. Reading all 18 unlocks the Knowledge Scholar achievement.</p>
+</div>
+
+<!-- S1: EXECUTIVE SUMMARY -->
+<div class="cs rv" data-s="exec">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('exec')"><span class="cs-ico">📜</span><div class="cs-tw"><div class="cs-t">Executive Summary</div><div class="cs-d">The mission, the urgency, and the path forward</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>Newfoundland and Labrador imports approximately <strong>90% of its food</strong>. This systemic vulnerability demands a province-wide food sovereignty strategy rooted in the land itself. This platform is a practical mission blueprint: not a wish list, but a minimum viable planting programme that any community, school, farm, or household can begin implementing today.</p>
+      <p>The strategy proceeds in two layers. <strong>Berry sovereignty comes first</strong>: NL's cool, acidic, maritime soils are uniquely well-matched to strawberries, currants, gooseberries, raspberries, blueberries, lingonberry, haskap, saskatoon, and cranberry. These species produce within one to three years and thrive without the windbreaks demanded by tree fruits. <strong>Tree fruit sovereignty comes second</strong>: apple, pear, plum, and sour cherry build the longer-horizon caloric depth that defines true food independence. Plant berries while your trees establish — a community that plants currants and strawberries alongside apple trees eats well from Year 2 while the tree fruit layer matures over years four to eight.</p>
+      <div class="dbox">⚖️ <strong>Legal Notice:</strong> This platform does not grant any permission to plant on any land. Verify land ownership, municipal bylaws, provincial regulations, Indigenous community rights and treaty obligations, environmental assessments, and road safety requirements before planting anywhere.</div>
+      <h3>Core Principles</h3>
+      <ul>
+        <li><strong>Berries before trees</strong> — faster yields, hardier, matched to NL soils and climate.</li>
+        <li><strong>Ecology before monoculture</strong> — nitrogen-fixers, windbreaks, and pollinators from Day 1.</li>
+        <li><strong>Wild before exotic</strong> — NL's native species (partridgeberry, bakeapple, wild blueberry) are already food sovereignty in place; protect and expand them first.</li>
+        <li><strong>Community before individual</strong> — shared orchards, training hubs, and seed banks multiply impact.</li>
+        <li><strong>Safety always</strong> — no plantings that endanger traffic, wildlife corridors, or vulnerable ecosystems.</li>
+        <li><strong>Sovereignty is earned over generations</strong> — the 100-year timeline is how food forests actually work.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S2: WHY BERRIES FIRST -->
+<div class="cs rv" data-s="berries">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('berries')"><span class="cs-ico">🫐</span><div class="cs-tw"><div class="cs-t">Why Berries Are the Fastest Route to Food Sovereignty</div><div class="cs-d">Evidence for prioritising small fruits in NL's climate and soils</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>NL's cool, short growing seasons, naturally acidic soils (pH 4.5–5.5 broadly), and Atlantic wind create conditions that challenge temperate tree fruits but actively favour a suite of high-nutrition berry crops. This is a competitive ecological advantage to exploit immediately, not a limitation to work around.</p>
+      <div class="tw"><table class="tbl"><thead><tr><th>Factor</th><th>Berries &amp; Small Fruits</th><th>Tree Fruits</th></tr></thead><tbody>
+        <tr><td>Time to first harvest</td><td class="t-ok">1–3 years</td><td class="t-caut">4–8 years</td></tr>
+        <tr><td>Cold hardiness</td><td class="t-ok">Zone 2–5 most species</td><td class="t-caut">Zone 4–5, careful siting required</td></tr>
+        <tr><td>Preferred soil pH</td><td class="t-ok">4.5–6.0 (matches NL soils)</td><td class="t-caut">6.0–6.8 (amendment needed)</td></tr>
+        <tr><td>Pollination complexity</td><td class="t-ok">Many self-fertile</td><td class="t-caut">Most require cross-pollination</td></tr>
+        <tr><td>Infrastructure needed</td><td class="t-ok">Mulch and basic stakes</td><td class="t-caut">Rootstocks, training, frost protection</td></tr>
+        <tr><td>Nutritional density</td><td class="t-ok">Exceptionally high (anthocyanins, vitamin C)</td><td class="t-caut">Moderate</td></tr>
+      </tbody></table></div>
+      <h3>NL's Native Berry Wealth — Already Food Sovereignty in Place</h3>
+      <p>Wild lowbush blueberry (<em>Vaccinium angustifolium</em>), partridgeberry (<em>V. vitis-idaea</em>), and bakeapple (<em>Rubus chamaemorus</em>) are native to NL's landscape. The minimum viable strategy must begin by <strong>protecting, expanding community access to, and supplementing</strong> these wild populations — not replacing them with exotic cultivars. Wild berry commons are the province's existing food sovereignty infrastructure.</p>
+    </div>
+  </details>
+</div>
+
+<!-- S3: BUNDLES -->
+<div class="cs rv" data-s="bundles">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('bundles')"><span class="cs-ico">📦</span><div class="cs-tw"><div class="cs-t">Minimum Viable Purchase Bundles</div><div class="cs-d">Six scales from Backyard to Province-wide starter swarm</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="cbox">⚠️ Confirm land rights, zoning, and planting permissions before purchasing. These bundles are planning tools, not procurement orders.</div>
+      <div class="tw"><table class="tbl"><thead><tr><th>Bundle</th><th>Scale</th><th>Key Plants</th><th>Est. Cost (CAD)</th></tr></thead><tbody>
+        <tr><td><strong>A — Backyard</strong></td><td>50–200 m² · 1–2 people</td><td>25 strawberry crowns · 3 red currant · 2 black currant · 6 raspberry canes · 2 highbush blueberry · 2 haskap pair · 1 apple (Novamac) · 1 Dolgo crabapple · 3 comfrey · 0.5 kg clover seed · 2 tree guards · mulch · soil test</td><td>~$160–270</td></tr>
+        <tr><td><strong>B — Institutional</strong></td><td>200–500 m² · School/Library</td><td>80 strawberry · 10 mixed currant · 4 gooseberry · 20 raspberry · 4 saskatoon · 6 blueberry · 4 haskap (2 pairs) · 3 apple + 1 Dolgo · 2 sour cherry · 15 support plants · 2 kg seed mix · 6 tree guard sets · 1 m³ mulch</td><td>~$650–1,100</td></tr>
+        <tr><td><strong>C — Roadside Corridor</strong></td><td>Traffic-safe buffer</td><td>10 saskatoon · 8 native currant/gooseberry · 60 wild strawberry plugs · 20 willow/alder cuttings · 0.5 kg NL-native wildflower · 5 interpretive signs</td><td>~$320–520</td></tr>
+        <tr><td><strong>D — Community Orchard</strong></td><td>~0.25 ha · 50–100 people</td><td>300 strawberry · 40 currant · 20 gooseberry · 60 raspberry · 20 blackberry · 30 blueberry · 20 haskap · 20 saskatoon · 100 lingonberry · 15 apple + 4 Dolgo · 4 pear · 6 cherry · 4 plum · 50 alder/willow · 45 comfrey · 20 caragana · 10 kg cover seed</td><td>~$3,800–6,500</td></tr>
+        <tr><td><strong>E — 1-ha Node</strong></td><td>Full food forest · 100–200 people</td><td>1,000 strawberry · 150 currant · 200 raspberry/blackberry · 80 blueberry · 60 haskap · 350 lingonberry/cranberry · 30 apple + 8 Dolgo · 8 pear · 12 cherry · 180 alder/willow · 150 comfrey · 25 kg seed · 50 m³ mulch · 1 hoop house</td><td>~$16,000–30,000</td></tr>
+        <tr><td><strong>F — Province-Wide</strong></td><td>100 communities</td><td>Bundle D × 100 adjusted by region. 5–8 regional nursery hubs. Multi-year phased delivery.</td><td>~$420,000–800,000</td></tr>
+      </tbody></table></div>
+      <h3>Key Purchase Rules</h3>
+      <ul>
+        <li>Always include <strong>Dolgo crabapple</strong> with any apple planting — universal pollinator, Zone 3 hardy, never omit.</li>
+        <li>Always buy <strong>compatible pairs</strong> for haskap (Borealis + Tundra or Aurora + Solo) — will not fruit without a cross-pollinator.</li>
+        <li>Buy 2+ cultivars of highbush blueberry for cross-pollination.</li>
+        <li>Alder and willow cuttings are often free — source locally from roadsides or tree services.</li>
+        <li>Wood chip mulch is often free — ask local tree services or municipal works.</li>
+        <li><strong>Never add lime near blueberry, lingonberry, or cranberry</strong> — they need acidic soil (pH 4.0–5.5) and lime destroys their mycorrhizal associations.</li>
+        <li>Inoculate clover and vetch seed with rhizobia before sowing.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S4: REGIONAL GUIDE -->
+<div class="cs rv" data-s="regions">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('regions')"><span class="cs-ico">🗺️</span><div class="cs-tw"><div class="cs-t">Regional Planting Guide — All 9 NL Zones</div><div class="cs-d">Avalon · West Coast · Central · Northern Peninsula · Labrador · Bogs · Roadside · Institutional · Coastal</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Region</th><th>Zone</th><th>Priority Crops</th><th>Key Challenge</th><th>Rating</th></tr></thead><tbody>
+        <tr><td><strong>Avalon / St. John's / South</strong></td><td>5b–6a · 150–170 days</td><td>All species possible. Apple (Novamac, Redfree, Liberty), pear, sour cherry, plum, all currants, haskap, blueberry, strawberry (Sparkle, Kent, Micmac)</td><td>Salt spray near coast, Atlantic storms, fog limiting ripening</td><td class="t-ok">★★★ Highest potential</td></tr>
+        <tr><td><strong>West Coast / Codroy Valley</strong></td><td>5b · 140–160 days</td><td>NL's best apple and plum zone. All berries. Blackberry Chester Thornless. Haskap.</td><td class="t-bad">Moose pressure extreme — 8-ft perimeter fencing mandatory for all tree plantings</td><td class="t-ok">★★★ Premier orchard zone</td></tr>
+        <tr><td><strong>Central Newfoundland</strong></td><td>4b–5a · 120–135 days</td><td>All currants, haskap, saskatoon, highbush blueberry, gooseberry, raspberry. Sour cherry (North Star), Dolgo crabapple. Hardy pear on sheltered south-facing slopes.</td><td>Shorter season limits stone fruit. Spring frosts. Windbreaks of spruce essential.</td><td class="t-ok">★★ Berry-led strategy</td></tr>
+        <tr><td><strong>Northern Peninsula</strong></td><td>3b–4b · 90–120 days</td><td>Red and black currant, saskatoon, gooseberry, Boyne raspberry, wild strawberry, lingonberry, crowberry. Dolgo crabapple only for tree fruits.</td><td>High winds, short season, severe winters. All plantings need windbreak protection.</td><td class="t-caut">★ Shrub and berry focus</td></tr>
+        <tr><td><strong>Labrador</strong></td><td>1–3 · 60–100 days</td><td>Wild blueberry (protect), partridgeberry, bakeapple (protect bog habitat — do NOT transplant), crowberry, Zone 3 currants. No outdoor tree fruits viable.</td><td>Permafrost risk, extremely short season. Wild populations are the primary strategy.</td><td class="t-bad">Wild-native first only</td></tr>
+        <tr><td><strong>Bogs &amp; Wet Acidic Sites</strong></td><td>all</td><td>Native cranberry, bakeapple, partridgeberry, Labrador tea. Protect existing bog ecosystems above all else.</td><td>Legally protected in many NL areas. Never drain bog hydrology.</td><td class="t-bad">Protect only — no cultivation</td></tr>
+        <tr><td><strong>Roadside Corridors</strong></td><td>all</td><td>Saskatoon, wild strawberry, low currant shrubs, native wildflower buffers. No fruiting trees near roads.</td><td>Min. 15–30m setback from high-speed roads. Written road authority approval required.</td><td class="t-caut">⚠ Permit required</td></tr>
+        <tr><td><strong>Schools / Libraries / Care Centres</strong></td><td>all</td><td>Strawberries, currants, haskap (first fruit), saskatoon, pollinator wildflower border, culinary herbs. 1–2 apples if space permits.</td><td>Raised beds for accessibility. Interpretive labels on all plants. Fenced if near road.</td><td class="t-ok">★★ Education-first design</td></tr>
+        <tr><td><strong>Coastal Wind-Exposed</strong></td><td>all</td><td>Windbreaks first (alder, willow, Caragana) — 2–3 years before any fruit crops. Wild beach strawberry, crowberry, native currants in windbreak lee.</td><td>Salt spray within 500m of open coast. Sea Buckthorn potentially invasive — consult ecologist.</td><td class="t-caut">⚠ Windbreak-first mandatory</td></tr>
+      </tbody></table></div>
+    </div>
+  </details>
+</div>
+
+<!-- S5: MATRIX -->
+<div class="cs rv" data-s="matrix">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('matrix')"><span class="cs-ico">📊</span><div class="cs-tw"><div class="cs-t">What to Plant Where — Decision Matrix</div><div class="cs-d">Species suitability across all NL regions</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>Legend: <span class="b bg">★★★ Best</span> <span class="b bc">★★ Good</span> <span class="b ba">★ Fair/with care</span> <span class="b br">✗ Not recommended</span></p>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Avalon</th><th>West Coast</th><th>Central</th><th>N. Peninsula</th><th>Labrador</th><th>Bog Sites</th><th>Coastal</th></tr></thead><tbody>
+        <tr><td>Wild Blueberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td></tr>
+        <tr><td>Highbush Blueberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-caut">★</td><td class="t-caut">★</td></tr>
+        <tr><td>Lingonberry / Partridgeberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td></tr>
+        <tr><td>Bakeapple / Cloudberry</td><td class="t-caut">★</td><td class="t-caut">★</td><td class="t-ok">★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td></tr>
+        <tr><td>Haskap / Honeyberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Strawberry (cultivated)</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Red / White Currant</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-ok">★★</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Black Currant</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Gooseberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Raspberry</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Saskatoon</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Apple (Novamac, Liberty)</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td></tr>
+        <tr><td>Dolgo Crabapple</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-caut">★</td></tr>
+        <tr><td>Sour Cherry (North Star)</td><td class="t-ok">★★★</td><td class="t-ok">★★★</td><td class="t-ok">★★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td></tr>
+        <tr><td>Pear / Plum</td><td class="t-ok">★★</td><td class="t-ok">★★★</td><td class="t-caut">★</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td><td class="t-bad">✗</td></tr>
+      </tbody></table></div>
+    </div>
+  </details>
+</div>
+
+<!-- S6: SPECIES PROFILES -->
+<div class="cs rv" data-s="species">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('species')"><span class="cs-ico">🌱</span><div class="cs-tw"><div class="cs-t">Species Profiles — Cultivar Lists and Caution Flags</div><div class="cs-d">All major species with recommended cultivars and NL-specific notes</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <h3>Priority Berry Crops</h3>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Zone</th><th>pH</th><th>Yield</th><th>Recommended Cultivars</th><th>Key Notes</th></tr></thead><tbody>
+        <tr><td><strong>🫐 Wild Blueberry</strong> <em>V. angustifolium</em></td><td>2–6</td><td>4.0–5.5</td><td>2–3 yr</td><td>Protect wild stands — native ecotypes best for NL</td><td class="t-ok">Native. Protect wild populations first.</td></tr>
+        <tr><td><strong>🫐 Highbush Blueberry</strong> <em>V. corymbosum</em></td><td>4–7</td><td>4.0–5.5</td><td>3–5 yr</td><td>Bluecrop + Duke + Spartan (plant 2+ cultivars)</td><td>pH-amended beds. Cross-pollination essential.</td></tr>
+        <tr><td><strong>🔴 Lingonberry</strong> <em>V. vitis-idaea</em></td><td>2–7</td><td>4.0–5.5</td><td>2–4 yr</td><td>Order specialty nursery plugs. Wild ecotype preferred.</td><td class="t-ok">Native. Culturally significant. Do not recklessly transplant wild plants.</td></tr>
+        <tr><td><strong>🍓 Strawberry</strong></td><td>3–8</td><td>5.5–6.5</td><td>1 yr</td><td>Sparkle (hardy), Bounty (heavy), Kent (flavour), Micmac (late — reduces frost risk)</td><td>Fastest sovereignty crop. Renew from runners every 3–4 years.</td></tr>
+        <tr><td><strong>🟡 Haskap</strong> <em>Lonicera caerulea</em></td><td>2–8</td><td>5.5–7.0</td><td>2–3 yr</td><td>Borealis + Tundra OR Aurora + Solo (compatible pairs REQUIRED)</td><td>First fruit of season (June). Must plant compatible pairs.</td></tr>
+        <tr><td><strong>🍒 Red / White Currant</strong></td><td>3–7</td><td>5.5–7.0</td><td>2–3 yr</td><td>Red Lake, Stanza, Cascade, White Grape, White Pearl</td><td>Most reliable NL cultivated fruit. Self-fertile, shade-tolerant.</td></tr>
+        <tr><td><strong>⚫ Black Currant</strong></td><td>3–6</td><td>5.5–7.0</td><td>2–3 yr</td><td>Ben Sarek (compact, heavy), Ben Alder (juice), Titania (large, disease resistant)</td><td>4× more vitamin C than lemon. Plant 2 cultivars.</td></tr>
+        <tr><td><strong>🟢 Gooseberry</strong></td><td>3–6</td><td>5.5–7.0</td><td>2–3 yr</td><td>Pixwell (thornless, very hardy), Invicta (large, disease resistant)</td><td>Self-fertile. Check pine blister rust regulations near pine stands.</td></tr>
+        <tr><td><strong>🍇 Raspberry</strong></td><td>3–6</td><td>5.5–6.5</td><td>2 yr</td><td>Boyne (cold-hardy), Festival (NL performance), Nova (upright)</td><td>Biennial canes — prune spent floricanes after harvest.</td></tr>
+        <tr><td><strong>🌸 Saskatoon</strong></td><td>2–6</td><td>5.5–7.5</td><td>3–4 yr</td><td>Smoky (large berry), Northline, Martin</td><td class="t-ok">Zone 2 hardy. Culturally significant to Indigenous communities.</td></tr>
+        <tr><td><strong>🟡 Bakeapple / Cloudberry</strong></td><td>1–5</td><td>3.5–5.0</td><td>Variable</td><td>Native bog species only. Do NOT transplant wild plants.</td><td class="t-bad">Protect bog habitat. Community wild harvest protocols are the strategy.</td></tr>
+      </tbody></table></div>
+      <h3>Tree Fruit Species</h3>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Zone</th><th>pH</th><th>Yield</th><th>Recommended Cultivars</th><th>Key Notes</th></tr></thead><tbody>
+        <tr><td><strong>🍎 Apple</strong></td><td>4–8</td><td>6.0–7.0</td><td>4–7 yr</td><td>Novamac (earliest, NL-adapted), Redfree (scab-immune), Prima, Liberty, Freedom. Semi-dwarf M.26 or M.7 rootstocks.</td><td>Cross-pollination essential. Always include Dolgo. Scab-resistant cultivars only in NL.</td></tr>
+        <tr><td><strong>🍎 Dolgo Crabapple</strong></td><td>3–8</td><td>6.0–7.0</td><td>3–5 yr</td><td>Dolgo is the only cultivar you need</td><td class="t-ok">Zone 3 hardy. Universal pollinator for ALL apple cultivars. Never omit.</td></tr>
+        <tr><td><strong>🍒 Sour Cherry</strong></td><td>4–7</td><td>6.0–7.0</td><td>3–5 yr</td><td>North Star (dwarf, self-fertile), Meteor (semi-dwarf), Montmorency</td><td>Self-fertile. More cold-hardy than sweet cherry. Avoid sweet cherry in most NL.</td></tr>
+        <tr><td><strong>🍐 Pear (Hardy)</strong></td><td>4–6</td><td>6.0–7.0</td><td>5–8 yr</td><td>Ure (Prairie-bred, very hardy), Luscious, John</td><td>2 compatible varieties required. Fire blight risk — prune 30cm below lesion.</td></tr>
+        <tr><td><strong>🟣 European Plum</strong></td><td>4–6</td><td>6.0–7.0</td><td>4–6 yr</td><td>Damson (self-fertile, excellent jam), Green Gage, Voyageur, Iroquois, Mount Royal. Japanese: Early Golden, Burbank, Shiro (West Coast only).</td><td>Watch for black knot — prune and destroy infected wood immediately.</td></tr>
+      </tbody></table></div>
+      <h3>Support and Ecological Species</h3>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Role</th><th>Notes</th></tr></thead><tbody>
+        <tr><td><strong>🌿 Speckled/Green Alder</strong> <em>Alnus incana/viridis</em></td><td>Nitrogen-fixer, windbreak, wildlife habitat</td><td class="t-ok">Native to NL. Roots from cuttings in water overnight. Often free. Prefer native alder over introduced varieties.</td></tr>
+        <tr><td><strong>🌳 Siberian Peashrub</strong> <em>Caragana arborescens</em></td><td>N-fixing windbreak shrub, edible seeds</td><td>Zone 2 hardy. Non-invasive in NL.</td></tr>
+        <tr><td><strong>🌿 Comfrey (Bocking 14 ONLY)</strong></td><td>Dynamic mineral accumulator, mulch source</td><td class="t-bad">Sterile Bocking 14 cultivar ONLY. Non-sterile comfrey spreads invasively. Never near waterways.</td></tr>
+        <tr><td><strong>🌼 Clover + Vetch Mix</strong></td><td>N-fixing cover crop, pollinator support</td><td>Inoculate with rhizobia bacteria before sowing.</td></tr>
+      </tbody></table></div>
+      <div class="dbox">⚠️ <strong>Do not plant in NL:</strong> Autumn Olive (invasive) · Russian Olive (invasive) · Japanese Knotweed (severely invasive) · Sea Buckthorn (potentially invasive — consult ecologist first) · Non-sterile comfrey (Bocking 14 only) · Sweet cherry (insufficient cold hardiness in most NL)</div>
+    </div>
+  </details>
+</div>
+
+<!-- S7: QUANTITIES -->
+<div class="cs rv" data-s="qty">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('qty')"><span class="cs-ico">🔢</span><div class="cs-tw"><div class="cs-t">Minimum Purchase Quantity Tables</div><div class="cs-d">Per-species quantities by planting scale</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Species / Item</th><th>Backyard</th><th>Institutional</th><th>Community Orchard</th><th>1-ha Node</th><th>Notes</th></tr></thead><tbody>
+        <tr><td>Strawberry crowns</td><td>25</td><td>80</td><td>300</td><td>1,000</td><td>Late-variety cultivars (Micmac). Bare-root dormant.</td></tr>
+        <tr><td>Red currant</td><td>3</td><td>5</td><td>20</td><td>60</td><td>Min. 2 for best yield enhancement</td></tr>
+        <tr><td>Black currant</td><td>2</td><td>5</td><td>20</td><td>60</td><td>Plant 2 cultivars; cross improves yield</td></tr>
+        <tr><td>Gooseberry</td><td>2</td><td>4</td><td>15</td><td>50</td><td>Self-fertile; mix cultivars for season extension</td></tr>
+        <tr><td>Raspberry canes</td><td>6</td><td>20</td><td>60</td><td>200</td><td>50 cm in-row; 2 m row spacing</td></tr>
+        <tr><td>Highbush blueberry</td><td>2</td><td>6</td><td>30</td><td>80</td><td>Must have 2+ cultivars for cross-pollination</td></tr>
+        <tr><td>Haskap (pair)</td><td>2</td><td>4</td><td>16</td><td>50</td><td>MUST buy compatible cross-pollinating pair</td></tr>
+        <tr><td>Saskatoon</td><td>1</td><td>4</td><td>20</td><td>50</td><td>Self-fertile; spreads by suckers</td></tr>
+        <tr><td>Lingonberry plugs</td><td>10</td><td>30</td><td>100</td><td>300</td><td>Slow to establish; worth every effort</td></tr>
+        <tr><td>Apple trees (grafted)</td><td>1–2</td><td>3</td><td>15</td><td>30</td><td>Always include Dolgo crabapple pollinator</td></tr>
+        <tr><td>Dolgo crabapple</td><td>1</td><td>1</td><td>4</td><td>8</td><td>Never omit where apples are planted</td></tr>
+        <tr><td>Sour cherry</td><td>0–1</td><td>2</td><td>6</td><td>12</td><td>North Star dwarf; self-fertile</td></tr>
+        <tr><td>Hardy pear</td><td>0</td><td>0–1</td><td>4</td><td>8</td><td>Plant 2 compatible varieties</td></tr>
+        <tr><td>European plum</td><td>0</td><td>0–1</td><td>4</td><td>8</td><td>Damson most reliable; self-fertile</td></tr>
+        <tr><td>Comfrey Bocking 14</td><td>3</td><td>12</td><td>40</td><td>150</td><td>1 per fruit tree; sterile cultivar ONLY</td></tr>
+        <tr><td>Alder/willow cuttings</td><td>3</td><td>15</td><td>50</td><td>180</td><td>Often free from local sources</td></tr>
+        <tr><td>Caragana shrubs</td><td>1</td><td>5</td><td>20</td><td>80</td><td>Windbreak + nitrogen-fixing</td></tr>
+        <tr><td>Clover/vetch seed (kg)</td><td>0.5</td><td>2</td><td>10</td><td>25</td><td>Inoculate with rhizobia before sowing</td></tr>
+        <tr><td>Pollinator wildflower (kg)</td><td>0.1</td><td>0.5</td><td>2</td><td>5</td><td>NL-native or non-invasive annuals only</td></tr>
+        <tr><td>Wood chip mulch (m³)</td><td>0.5</td><td>2</td><td>10</td><td>50</td><td>100–150 mm depth around all plants</td></tr>
+        <tr><td>Tree guards</td><td>2</td><td>6</td><td>25</td><td>60</td><td>Critical — hare and moose browse without exception</td></tr>
+        <tr><td>Soil test kits</td><td>1</td><td>1</td><td>2</td><td>3</td><td>Test before planting and again at Year 3</td></tr>
+      </tbody></table></div>
+    </div>
+  </details>
+</div>
+
+<!-- S8: SOIL GUIDE -->
+<div class="cs rv" data-s="soil">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('soil')"><span class="cs-ico">🪱</span><div class="cs-tw"><div class="cs-t">Soil &amp; Microclimate Decision Guide</div><div class="cs-d">pH, drainage, aspect, windbreaks, and amendment rates</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Crop</th><th>Ideal pH</th><th>If Too High (alkaline)</th><th>If Too Low (acidic)</th></tr></thead><tbody>
+        <tr><td>Wild / Highbush Blueberry</td><td>4.0–5.5</td><td class="t-bad">Elemental sulphur — 6+ months before planting. NEVER lime.</td><td>Usually fine in NL</td></tr>
+        <tr><td>Lingonberry / Cranberry</td><td>4.0–5.5</td><td class="t-bad">Sulphur + peat-based planting mix. NEVER lime.</td><td>Ideal in most NL soils</td></tr>
+        <tr><td>Strawberry</td><td>5.5–6.5</td><td>Light dolomitic lime + compost; retest</td><td>Light lime to 6.0 + compost</td></tr>
+        <tr><td>Currants / Gooseberry / Haskap</td><td>5.5–7.0</td><td>Tolerates wide range; compost addition</td><td>Light lime to 6.0</td></tr>
+        <tr><td>Raspberry / Blackberry</td><td>5.5–6.5</td><td>Compost + light lime</td><td>Lime to 6.0; add compost</td></tr>
+        <tr><td>Apple / Pear / Cherry / Plum</td><td>6.0–7.0</td><td>Dolomitic lime; apply 6 months ahead; retest</td><td>Lime to 6.5; compost + mulch</td></tr>
+      </tbody></table></div>
+      <div class="dbox">⚠️ <strong>Critical:</strong> Blueberry, lingonberry, and cranberry NEVER need lime. Adding lime destroys their mycorrhizal associations. Physically separate acid-requiring and alkaline-requiring beds. Never apply lime near acid-loving crops.</div>
+      <h3>Site Assessment Checklist</h3>
+      <ul>
+        <li><strong>Aspect:</strong> South/southeast slopes are 3–5°C warmer than flat ground — ideal for tree fruits. North-facing slopes are cooler — restrict to hardy currants, saskatoon, lingonberry.</li>
+        <li><strong>Frost pockets:</strong> Cold air pools in valley bottoms. Never plant early-blooming crops in valley bottoms. Plant on slopes above frost-drainage paths.</li>
+        <li><strong>Drainage test:</strong> Fill a 30cm hole with water. Drains in 1 hour = adequate. If not, install drainage tiles or use raised beds 30–60cm deep.</li>
+        <li><strong>Windbreaks:</strong> Plan 2–3 rows of native spruce/fir with alder or Caragana inner rows on north and west sides of all fruit plantings. A good windbreak reduces wind 50% for a distance equal to 10× its height.</li>
+      </ul>
+      <h3>Amendment Rates</h3>
+      <ul>
+        <li><strong>Compost:</strong> 5–10 cm at planting and annually. Improves all NL soils.</li>
+        <li><strong>Elemental sulphur:</strong> 10–40 kg/100m² six to twelve months before planting blueberries if pH above 5.5. Retest after treatment.</li>
+        <li><strong>Dolomitic lime:</strong> 2–4 kg/10m² for tree fruit beds below pH 6.0. Apply in autumn; retest in spring. Never near blueberry beds.</li>
+        <li><strong>Wood chip mulch:</strong> 10–15 cm around all plantings immediately after planting. Replenish annually.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S9: DENSITY -->
+<div class="cs rv" data-s="density">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('density')"><span class="cs-ico">📐</span><div class="cs-tw"><div class="cs-t">Planting Density Formulas &amp; Guild Design</div><div class="cs-d">Plants per area, row spacing, and orchard guild layout</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p style="font-family:var(--fm);background:rgba(74,222,128,.05);border:1px solid var(--bdr);padding:.65rem;border-radius:var(--rad);font-size:.8rem;color:var(--g1)">Plants = Area (m²) ÷ (Row spacing × In-row spacing)</p>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>In-Row</th><th>Row Spacing</th><th>Plants/100m²</th><th>Plants/ha</th></tr></thead><tbody>
+        <tr><td>Strawberry</td><td>0.30 m</td><td>0.60 m</td><td>~55</td><td>~5,550</td></tr>
+        <tr><td>Raspberry canes</td><td>0.50 m</td><td>2.00 m</td><td>~10</td><td>~1,000</td></tr>
+        <tr><td>Currant / Gooseberry</td><td>1.00 m</td><td>2.00 m</td><td>~5</td><td>~500</td></tr>
+        <tr><td>Highbush Blueberry</td><td>1.50 m</td><td>3.00 m</td><td>~2</td><td>~220</td></tr>
+        <tr><td>Haskap / Honeyberry</td><td>1.50 m</td><td>3.00 m</td><td>~2</td><td>~220</td></tr>
+        <tr><td>Saskatoon</td><td>1.00 m</td><td>3.00 m</td><td>~3</td><td>~330</td></tr>
+        <tr><td>Lingonberry</td><td>0.30 m</td><td>0.60 m</td><td>~55</td><td>~5,550</td></tr>
+        <tr><td>Apple (semi-dwarf M.26)</td><td>5.00 m</td><td>6.00 m</td><td>~3</td><td>~330</td></tr>
+        <tr><td>Sour Cherry (North Star)</td><td>3.50 m</td><td>4.00 m</td><td>~7</td><td>~714</td></tr>
+        <tr><td>Pear / Plum (standard)</td><td>5.00 m</td><td>6.00 m</td><td>~3</td><td>~330</td></tr>
+        <tr><td>Caragana hedge</td><td>0.50 m</td><td>single row</td><td>~20 per linear m</td><td>—</td></tr>
+      </tbody></table></div>
+      <h3>Orchard Guild Design for NL</h3>
+      <p>Each semi-dwarf apple tree should be surrounded by a designed guild that creates self-sustaining nutrient cycling. Working outward from the tree trunk: Comfrey Bocking 14 (3 plants) and alliums at 0.5–1m radius → currant or gooseberry shrubs (2–3 plants) at 1–2m → white clover or wild strawberry groundcover at 2–3m → pollinator strip (borage, phacelia, yarrow, native wildflowers) at canopy edge. Total footprint per guild approximately 28–35 m². This eliminates synthetic fertilizers, reduces weeding, and maximises pollinator habitat around each tree.</p>
+    </div>
+  </details>
+</div>
+
+<!-- S10: POLLINATION -->
+<div class="cs rv" data-s="pollination">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('pollination')"><span class="cs-ico">🐝</span><div class="cs-tw"><div class="cs-t">Pollination Compatibility Guide</div><div class="cs-d">Which species need cross-pollination and recommended pairings</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Self-Fertile?</th><th>Partner Required?</th><th>Recommended Partner / Notes</th></tr></thead><tbody>
+        <tr><td>Strawberry</td><td class="t-ok">Yes</td><td>No (bees improve yield)</td><td>Wildflower strip nearby</td></tr>
+        <tr><td>Currants (all)</td><td class="t-ok">Yes (cross improves)</td><td>Recommended</td><td>Plant 2+ cultivars for best production</td></tr>
+        <tr><td>Gooseberry</td><td class="t-ok">Yes</td><td>No</td><td>Single plant viable</td></tr>
+        <tr><td>Raspberry / Blackberry</td><td class="t-ok">Yes</td><td>No</td><td>Good bee habitat nearby</td></tr>
+        <tr><td>Highbush Blueberry</td><td class="t-caut">Partial</td><td class="t-caut">Yes — dramatically improves yield</td><td>Bluecrop + Duke + Spartan — plant 3 cultivars</td></tr>
+        <tr><td>Haskap / Honeyberry</td><td class="t-bad">No</td><td class="t-bad">Yes — absolutely essential</td><td>Borealis + Tundra OR Aurora + Solo</td></tr>
+        <tr><td>Saskatoon</td><td class="t-ok">Yes</td><td>Optional</td><td>Single plant adequate</td></tr>
+        <tr><td>Apple</td><td class="t-bad">No (most)</td><td class="t-bad">Yes — essential</td><td>Dolgo crabapple is universal pollinator — never omit</td></tr>
+        <tr><td>Dolgo Crabapple</td><td class="t-ok">Yes</td><td>No</td><td>Pollinates ALL apple cultivars</td></tr>
+        <tr><td>Sour Cherry (North Star, Montmorency)</td><td class="t-ok">Yes</td><td>No</td><td>Single plant viable</td></tr>
+        <tr><td>Pear</td><td class="t-caut">Partial</td><td class="t-caut">Strongly recommended</td><td>Ure + second compatible variety; confirm bloom overlap</td></tr>
+        <tr><td>Plum (Damson, Voyageur)</td><td class="t-ok">Yes</td><td>No</td><td>Single plant viable</td></tr>
+      </tbody></table></div>
+      <div class="ibox">🐝 <strong>Wild bee conservation is the most important pollination strategy in NL.</strong> Bumble bee species are critical pollinators for blueberry and cranberry. Their ground-nesting requirements mean undisturbed soil patches near orchards are pollination infrastructure. Protect nesting sites, eliminate pesticide use, and plant native wildflower strips.</div>
+    </div>
+  </details>
+</div>
+
+<!-- S11: TIMELINE -->
+<div class="cs rv" data-s="timeline">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('timeline')"><span class="cs-ico">⏳</span><div class="cs-tw"><div class="cs-t">Timeline — Year 1 to Year 100</div><div class="cs-d">From first strawberry crown to provincial food forest network</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Horizon</th><th>Key Activities</th><th>Expected Outcomes</th><th>Yield/Person</th></tr></thead><tbody>
+        <tr><td><strong>Year 1 (2026)</strong></td><td>Site surveys, soil testing, windbreak establishment (alder/willow/Caragana cuttings), cover crop sowing, first strawberry and raspberry planting, propagation nursery setup, community training launch</td><td>Windbreaks established. Cover crops greening. First nursery propagation underway.</td><td>~0 (establishment)</td></tr>
+        <tr><td><strong>Years 2–3 (2027–28)</strong></td><td>First strawberry and raspberry harvests. Plant currants, gooseberry, saskatoon, blueberry, haskap, lingonberry. Plant fruit trees on prepared, sheltered sites.</td><td>First berry harvests. Community harvest events build local food culture. Nursery producing 50%+ of new plant material.</td><td>~4–8 kg</td></tr>
+        <tr><td><strong>Year 5 (2031)</strong></td><td>Currants, gooseberry, saskatoon at full production. Highbush blueberry producing. Apple trees flowering. First provincial cutting exchange.</td><td>Established berry sovereignty in planted communities. Orchards fully operational with trained stewards.</td><td>~20 kg</td></tr>
+        <tr><td><strong>Year 10 (2036)</strong></td><td>Apple, sour cherry, plum producing significant harvests in Zone 5+ sites. Pear beginning. School orchards training second generation.</td><td>Full berry + tree fruit sovereignty in active communities. 30–40% provincial fruit need from local sources.</td><td>~42 kg</td></tr>
+        <tr><td><strong>Year 25 (2051)</strong></td><td>Full orchard maturity. Regional nursery hubs providing free plant material. Food forests in every NL municipal area.</td><td>30–40% provincial fruit sovereignty broadly. Climate adaptation ongoing.</td><td>~85 kg</td></tr>
+        <tr><td><strong>Year 100 (2126)</strong></td><td>Distributed provincial food forest network. Hundreds of community orchards. Managed wild berry commons. Native species protected.</td><td>60–80% provincial fruit sovereignty. Orchard Mission woven into provincial cultural identity and land law.</td><td>~120 kg</td></tr>
+      </tbody></table></div>
+      <div class="ibox">Average Canadian fruit consumption is approximately 100 kg/year per person. The pathway: berries first (high confidence, fast) → tree fruits second (high confidence, slow) → expanded wild berry commons third (ongoing, near-zero cost once established).</div>
+    </div>
+  </details>
+</div>
+
+<!-- S12: NURSERY -->
+<div class="cs rv" data-s="nursery">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('nursery')"><span class="cs-ico">🏗️</span><div class="cs-tw"><div class="cs-t">Nursery &amp; Propagation Strategy</div><div class="cs-d">Building local plant supply to reduce purchase costs to near-zero</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>A community propagation nursery is the highest-leverage investment in the food sovereignty mission. Once established, it eliminates ongoing plant purchase costs and builds local resilience. Five community members each propagating 50 currant cuttings produce enough plants to establish three new community orchard sites at near-zero cost — while simultaneously building propagation skills in five households rather than one specialist.</p>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Method</th><th>Success Rate</th><th>Timing</th></tr></thead><tbody>
+        <tr><td>Raspberry / Blackberry</td><td>Root suckers; tip layering</td><td class="t-ok">95%</td><td>Spring or autumn</td></tr>
+        <tr><td>Currants (all)</td><td>Hardwood cuttings 20–25cm</td><td class="t-ok">80–90%</td><td>Late autumn — bundle in moist sand; plant March–April</td></tr>
+        <tr><td>Gooseberry</td><td>Hardwood cuttings</td><td class="t-ok">75–85%</td><td>Late autumn</td></tr>
+        <tr><td>Strawberry</td><td>Runners (stolons)</td><td class="t-ok">98%</td><td>Summer after harvest — pin into pots; sever after 3–4 weeks</td></tr>
+        <tr><td>Saskatoon</td><td>Root suckers; layering</td><td class="t-ok">85%</td><td>Spring</td></tr>
+        <tr><td>Alder / Willow</td><td>Hardwood or softwood cuttings</td><td class="t-ok">90–98%</td><td>Any season — willow roots in a glass of water overnight</td></tr>
+        <tr><td>Haskap</td><td>Softwood cuttings + misting</td><td class="t-caut">60–70%</td><td>June–July; IBA rooting hormone recommended</td></tr>
+        <tr><td>Highbush Blueberry</td><td>Semi-hardwood cuttings</td><td class="t-caut">50–70%</td><td>June–August; acidic peat/perlite medium</td></tr>
+        <tr><td>Lingonberry</td><td>Stem cuttings; division</td><td class="t-caut">60–75%</td><td>Spring / early summer</td></tr>
+        <tr><td>Comfrey (Bocking 14)</td><td>Root division</td><td class="t-ok">99%</td><td>Spring or autumn — even a 2cm root fragment grows</td></tr>
+        <tr><td>Apple / Pear / Cherry / Plum</td><td>T-budding or whip-and-tongue grafting</td><td class="t-caut">50–80%</td><td>Summer (bud); early spring (graft)</td></tr>
+      </tbody></table></div>
+      <h3>Minimum Viable Nursery Infrastructure</h3>
+      <ul>
+        <li><strong>Hoop house:</strong> 6×12m PVC/rebar tunnel with poly cover (~$800–2,000 CAD). Extends growing season 4–6 weeks at each end.</li>
+        <li><strong>Cold frames:</strong> Recycled window frames on south-facing wall — free to build, extend seed-starting 4–6 weeks.</li>
+        <li><strong>Propagation trays:</strong> 60×90cm wooden trays with drainage; 50% perlite + 50% peat or coir substrate.</li>
+        <li><strong>Seedling heat mat:</strong> Maintains 20–25°C — dramatically improves germination and rooting rates in cold NL springs.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S13: SEED-SAVING -->
+<div class="cs rv" data-s="seed">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('seed')"><span class="cs-ico">🌾</span><div class="cs-tw"><div class="cs-t">Seed-Saving &amp; Cutting Guide</div><div class="cs-d">Building seed sovereignty alongside food sovereignty</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>Save seed only from open-pollinated heritage cultivars — never from F1 hybrids, which do not breed true. Focus seed-saving on cover crop species and support plants as the most accessible entry point. For vegetatively propagated species (currant, raspberry, strawberry, comfrey), cuttings and divisions are more reliable and faster than seed.</p>
+      <h3>Hardwood Cutting Calendar for NL</h3>
+      <ul>
+        <li><strong>November–December:</strong> Collect cuttings from currants, gooseberries, willows, and alders after leaf fall and before hard freeze. Cut 20–25cm sections, pencil-thickness, with clean cuts just above and below a bud.</li>
+        <li><strong>December–February:</strong> Bundle in barely moist sand; store in cool shed or cold room at 2–5°C. Do not freeze.</li>
+        <li><strong>March–April:</strong> Plant bundles upright in nursery beds with 2–3 buds above the soil surface. Water and protect from late frosts with row cover fleece.</li>
+        <li><strong>May–June:</strong> Most cuttings leafing out. Begin light fertilisation with dilute comfrey tea or liquid seaweed.</li>
+        <li><strong>Autumn:</strong> Transplant well-rooted cuttings to final positions.</li>
+      </ul>
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Method</th><th>Storage</th><th>Viability</th></tr></thead><tbody>
+        <tr><td>Cover crop (clover, vetch)</td><td>Let go to seed; thresh dry pods; winnow</td><td>Paper bag, cool/dry/dark with silica gel</td><td>3–5 years</td></tr>
+        <tr><td>NL-native wildflowers</td><td>Collect ripe seedheads; dry 2 weeks in paper bags</td><td>Paper bag, refrigerated</td><td>1–3 years</td></tr>
+        <tr><td>Caragana</td><td>Collect dry brown pods; thresh</td><td>Cool, dry, dark</td><td>3–5 years</td></tr>
+        <tr><td>Apple/pear (rootstock seed only)</td><td>Wash pulp; ferment 48h; dry; cold-stratify 90 days in moist refrigerator</td><td>Sealed bag in fridge</td><td>1–2 years</td></tr>
+      </tbody></table></div>
+    </div>
+  </details>
+</div>
+
+<!-- S14: LEGAL -->
+<div class="cs rv" data-s="legal">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('legal')"><span class="cs-ico">⚖️</span><div class="cs-tw"><div class="cs-t">Legal, Permission &amp; Safety Framework</div><div class="cs-d">Crown land, municipal land, schools, roads, and Indigenous rights</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="dbox">⚠️ <strong>This platform does not grant any planting permissions.</strong> All planting requires independent verification with the relevant land authority, municipality, provincial government, and Indigenous community governance bodies.</div>
+      <div class="tw"><table class="tbl"><thead><tr><th>Land Type</th><th>Who to Contact</th><th>Key Requirements</th><th>Complexity</th></tr></thead><tbody>
+        <tr><td>Private land (own)</td><td>Verify property boundaries; municipal bylaws</td><td>Tree height limits, setback rules, species restrictions</td><td class="t-ok">Low</td></tr>
+        <tr><td>Municipal parks / public land</td><td>Municipal parks dept. / city council</td><td>Community garden agreement; liability waiver; maintenance plan</td><td class="t-caut">Medium</td></tr>
+        <tr><td>School / institutional land</td><td>School board / institution administration</td><td>Board approval; curriculum plan; maintenance responsibility</td><td class="t-caut">Medium</td></tr>
+        <tr><td>Crown land (NL)</td><td>NL Dept. Fisheries, Forestry and Agriculture</td><td>License of Occupation application; environmental review; Indigenous consultation</td><td class="t-bad">High</td></tr>
+        <tr><td>Highway / road right-of-way</td><td>NL Dept. of Transportation; Trans-Canada Authority</td><td>Written authorization required; road safety assessment mandatory</td><td class="t-bad">Very High</td></tr>
+        <tr><td>Indigenous / treaty lands</td><td>Relevant Indigenous governance body (Nunatsiavut, Miawpukek, NunatuKavut)</td><td>Full FPIC (Free, Prior, and Informed Consent) process; community partnership; respect for traditional protocols and land stewardship practices</td><td class="t-bad">Sacred — deep engagement required</td></tr>
+        <tr><td>Wetlands / bogs</td><td>NL Dept. of Environment; federal DFO</td><td>Watercourse alteration permits may apply; bog ecosystems often protected</td><td class="t-bad">High</td></tr>
+      </tbody></table></div>
+      <h3>Key Species Regulations</h3>
+      <ul>
+        <li><strong>White pine blister rust:</strong> Some municipalities near white pine stands restrict Ribes species (currants and gooseberries). Check with your local forestry office before planting near pine.</li>
+        <li><strong>Invasive species:</strong> Federal and provincial regulations prohibit introducing listed invasive species. Check the NL invasive species list and ECCC federal list before purchasing any unfamiliar plant.</li>
+        <li><strong>Bog and wetland plants:</strong> Moving or transplanting plants from wild bogs may be subject to provincial environmental regulations and Indigenous customary law.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S15: WILDLIFE SAFETY -->
+<div class="cs rv" data-s="wildlife">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('wildlife')"><span class="cs-ico">🦌</span><div class="cs-tw"><div class="cs-t">Wildlife-Safe Planting Guidance</div><div class="cs-d">Moose, hare, road safety, and ecological buffer zones</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="dbox"><strong>Mandatory moose safety guidelines for Newfoundland:</strong> Maintain a minimum 25–30m setback between any fruit planting and the edge of any active road in moose-present areas. Do NOT plant willow, alder, or browsing-favoured shrubs within 50m of Trans-Canada or Route 1 shoulders. Never plant near blind corners, crests of hills, or road curve approaches. Where moose are known to frequent, <strong>8-foot (2.4m) perimeter fencing around all orchard plantings is mandatory without exception.</strong></div>
+      <h3>Snowshoe Hare Protection</h3>
+      <p>Snowshoe hare populations in NL cycle dramatically on a 7–11 year Lynx-Hare cycle. At population peaks, hares can completely girdle young fruit trees and shrubs, killing them. Install plastic spiral tree guards or wire mesh cylinders of at least 60cm height on all young tree trunks before the first winter. Do not rely on snow level for protection — hares travel on top of snow and browse at heights that seem safe in summer.</p>
+      <h3>Ecological Buffer Guidelines</h3>
+      <ul>
+        <li>Maintain minimum 15m buffer zones from any watercourse (stream, river, pond shoreline).</li>
+        <li>Do not plant within established bog habitats — plant at margins only, after ecological assessment.</li>
+        <li>Leave wildlife movement corridors between plantings to maintain connectivity for marten, fox, and ground-nesting birds.</li>
+        <li>Mixed species plantings are more ecologically stable than monocultures — always diversify species.</li>
+        <li>Encourage native predators (hawks, owls, foxes) by maintaining log piles, brush stacks, and undisturbed ground patches near orchards for nesting and hunting habitat.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- S16: CLIMATE RISK -->
+<div class="cs rv" data-s="climate">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('climate')"><span class="cs-ico">🌧️</span><div class="cs-tw"><div class="cs-t">Climate Risk &amp; Mitigation</div><div class="cs-d">Frost, wind, salt, drainage, disease, short seasons, and wildlife</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Risk</th><th>Crops Affected</th><th>Mitigation</th><th>Priority</th></tr></thead><tbody>
+        <tr><td><strong>Late spring frost (May)</strong></td><td>Cherry, early apple, strawberry</td><td>Plant late-blooming cultivars (Micmac strawberry, Stanza currant, Novamac apple); avoid frost pockets; use row cover fleece on blossom nights</td><td class="t-bad">Critical</td></tr>
+        <tr><td><strong>Atlantic wind and storm</strong></td><td>All tree fruits; tall crops</td><td>Establish windbreaks before planting; plant on lee side; stake all trees for first 3 years; select compact/semi-dwarf cultivars</td><td class="t-bad">Critical</td></tr>
+        <tr><td><strong>Salt spray</strong></td><td>All crops within 500m of open coast</td><td>Physical windbreaks; salt-tolerant buffer species; no tree fruits without established shelter</td><td class="t-caut">High</td></tr>
+        <tr><td><strong>Short growing season</strong></td><td>Late-ripening tree fruits</td><td>Prioritise early-ripening cultivars (Novamac, Redfree, Sparkle); season extension with hoop tunnels</td><td class="t-caut">High</td></tr>
+        <tr><td><strong>Poor drainage</strong></td><td>All tree fruits; strawberries</td><td>Drainage test before planting; install tiles; use raised beds; Malling Merton rootstocks tolerate wetter soils</td><td class="t-caut">High</td></tr>
+        <tr><td><strong>Apple scab (Venturia)</strong></td><td>Apple</td><td>Grow ONLY scab-resistant cultivars (Novamac, Redfree, Prima, Liberty, Freedom); avoid overhead irrigation; remove fallen leaves</td><td class="t-caut">High</td></tr>
+        <tr><td><strong>Fire blight (Erwinia)</strong></td><td>Pear, apple</td><td>Prune infected wood 30cm below lesion with sterilised tools; avoid excess nitrogen; copper spray in wet springs</td><td class="t-caut">Medium</td></tr>
+        <tr><td><strong>Black knot (Apiosporina)</strong></td><td>Plum, cherry</td><td>Annual inspection; prune galls 15cm below infection; destroy prunings; copper spray in wet springs</td><td class="t-caut">Medium</td></tr>
+        <tr><td><strong>Moose / hare browsing</strong></td><td>All young trees and shrubs</td><td>Tree guards at planting; 8-ft perimeter fencing in moose areas; hare guards before first winter — non-negotiable</td><td class="t-bad">Critical</td></tr>
+        <tr><td><strong>Drought stress (establishment)</strong></td><td>All plants in years 1–2</td><td>Heavy mulch (10–15cm); drip or soaker irrigation; water twice weekly during dry periods in establishment years</td><td class="t-caut">High</td></tr>
+        <tr><td><strong>Forest tent caterpillar</strong></td><td>Apple, cherry</td><td>Monitor; remove egg masses in winter; encourage birds (nest boxes); Bt spray if severe outbreak</td><td class="t-caut">Medium</td></tr>
+      </tbody></table></div>
+    </div>
+  </details>
+</div>
+
+<!-- S17: YIELD MODEL -->
+<div class="cs rv" data-s="yield">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('yield')"><span class="cs-ico">📈</span><div class="cs-tw"><div class="cs-t">Food Sovereignty Yield Model</div><div class="cs-d">Conservative, moderate, and high-success per-person fruit estimates</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Species</th><th>Conservative</th><th>Moderate</th><th>High-Success</th><th>Notes</th></tr></thead><tbody>
+        <tr><td>Strawberry (per m² bed)</td><td>0.3 kg</td><td>0.6 kg</td><td>1.0 kg</td><td>Mulched, renovated bed Year 2+</td></tr>
+        <tr><td>Red currant (per bush)</td><td>1.5 kg</td><td>3 kg</td><td>5 kg</td><td>Mature 5-year bush</td></tr>
+        <tr><td>Black currant (per bush)</td><td>2 kg</td><td>4 kg</td><td>6 kg</td><td>Ben Sarek type, mature</td></tr>
+        <tr><td>Gooseberry (per bush)</td><td>2 kg</td><td>4 kg</td><td>7 kg</td><td>Pixwell at 5 years</td></tr>
+        <tr><td>Raspberry (per metre row)</td><td>0.8 kg</td><td>1.5 kg</td><td>2.5 kg</td><td>Established mature row</td></tr>
+        <tr><td>Highbush blueberry (per bush)</td><td>2 kg</td><td>4 kg</td><td>7 kg</td><td>Mature 8-year bush with cross-pollinator</td></tr>
+        <tr><td>Haskap (per bush)</td><td>1 kg</td><td>2.5 kg</td><td>4 kg</td><td>Mature 5-year bush with compatible cross-pollinator</td></tr>
+        <tr><td>Saskatoon (per shrub)</td><td>2 kg</td><td>4 kg</td><td>8 kg</td><td>Mature 7-year multi-stem shrub</td></tr>
+        <tr><td>Apple (semi-dwarf)</td><td>20 kg</td><td>40 kg</td><td>70 kg</td><td>Mature 10-year semi-dwarf tree</td></tr>
+        <tr><td>Sour cherry (North Star)</td><td>8 kg</td><td>18 kg</td><td>30 kg</td><td>Mature dwarf tree Year 7+</td></tr>
+        <tr><td>Plum (European)</td><td>10 kg</td><td>25 kg</td><td>45 kg</td><td>Mature standard tree</td></tr>
+        <tr><td>Pear (semi-dwarf)</td><td>15 kg</td><td>35 kg</td><td>60 kg</td><td>Mature 10-year tree</td></tr>
+      </tbody></table></div>
+      <div class="ibox">Average Canadian fruit consumption is approximately 100 kg/year per person. Achieving 85–120 kg/person locally grown by Year 25–50 represents effective full fruit food sovereignty for a community. The pathway: berries first → tree fruits second → expanded wild berry commons third.</div>
+    </div>
+  </details>
+</div>
+
+<!-- S18: TRAINING -->
+<div class="cs rv" data-s="training">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('training')"><span class="cs-ico">🎓</span><div class="cs-tw"><div class="cs-t">Volunteer Training Module</div><div class="cs-d">Core competencies for community orchard stewards</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div class="tw"><table class="tbl"><thead><tr><th>Module</th><th>Topics Covered</th><th>Duration</th><th>Format</th></tr></thead><tbody>
+        <tr><td><strong>1. Site Assessment</strong></td><td>Soil testing, pH reading, drainage assessment, frost mapping, microclimate observation, sun-hour estimation, aspect analysis</td><td>Half day</td><td>Field + workshop</td></tr>
+        <tr><td><strong>2. Species ID &amp; Selection</strong></td><td>Identifying all recommended species; cultivar selection by region; understanding rootstocks; spotting mislabelled nursery stock</td><td>Full day</td><td>Field + slides</td></tr>
+        <tr><td><strong>3. Planting Techniques</strong></td><td>Bare-root planting; tree staking; mulching protocols; planting density calculation; guild design; strawberry crown planting</td><td>Full day</td><td>Hands-on field</td></tr>
+        <tr><td><strong>4. Seasonal Maintenance</strong></td><td>Pruning by season; comfrey tea fertilisation; watering schedules; mulch renewal; hare guard installation; frost cloth use; winter preparation</td><td>Full day per season</td><td>Field</td></tr>
+        <tr><td><strong>5. Pest &amp; Disease ID</strong></td><td>Visual ID of apple scab, fire blight, black knot, tent caterpillar, raspberry sawfly; monitoring trap use; integrated pest management; resistance-based prevention</td><td>Half day</td><td>Field + reference cards</td></tr>
+        <tr><td><strong>6. Propagation Basics</strong></td><td>Hardwood cuttings; runner pinning; sucker division; haskap and blueberry cuttings; basic grafting introduction; nursery calendar</td><td>Full day</td><td>Hands-on</td></tr>
+        <tr><td><strong>7. Harvest &amp; Preservation</strong></td><td>Harvest timing; community-scale preservation (freezing, jamming, drying, juicing); food safety basics; community distribution protocols</td><td>Full day</td><td>Kitchen + field</td></tr>
+        <tr><td><strong>8. Record Keeping</strong></td><td>Plant labelling; yield recording; soil test records; photographic monitoring; community logbook practices; knowledge-sharing methods</td><td>Half day</td><td>Workshop</td></tr>
+      </tbody></table></div>
+      <h3>Key NL Resources</h3>
+      <ul>
+        <li><strong>NL Department of Fisheries, Forestry and Agriculture:</strong> provincial soil testing, extension services, and cultivar trial data.</li>
+        <li><strong>Agriculture and Agri-Food Canada (AAFC):</strong> research cultivar trials and integrated pest management resources.</li>
+        <li><strong>Memorial University of Newfoundland:</strong> regional ecology and food systems research.</li>
+        <li><strong>NL Federation of Agriculture:</strong> farm networks and producer support resources.</li>
+        <li><strong>Local Indigenous knowledge holders:</strong> consult Mi'kmaw, Innu, Inuit, and Métis knowledge keepers for traditional ecological knowledge of NL fruit species, harvesting practices, and land protocols.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- RESEARCH TREE -->
+<div id="research" class="cs rv">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('research')"><span class="cs-ico">🔬</span><div class="cs-tw"><div class="cs-t">Research Unlock Tree</div><div class="cs-d">Spend Knowledge Points earned by reading sections and resolving events</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <p>Knowledge Points are earned by reading Field Guide sections (+3 each), resolving cascade events (+4 each), and advancing seasons (+2 each). Spend them here to unlock cascade bonuses, new species, deeper game mechanics, and improved guide content.</p>
+      <div style="font-family:var(--fu);font-size:.72rem;color:var(--tx2);margin-bottom:.7rem">Knowledge Points available: <strong style="color:var(--a1)" id="kpDisplay">0</strong></div>
+      <div class="res-grid" id="researchGrid"><div style="font-family:var(--fu);font-size:.7rem;color:var(--tx3)">Start the mission to unlock the research tree.</div></div>
+    </div>
+  </details>
+</div>
+
+<!-- CHRONICLES -->
+<div id="chronicles" class="cs rv">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('chronicles')"><span class="cs-ico">🏆</span><div class="cs-tw"><div class="cs-t">Chronicles — Achievements &amp; Event History</div><div class="cs-d">Your mission record, badges, event outcomes, and Orchard Advisor</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <h3>Achievements</h3>
+      <div class="ach-grid" id="achGrid"><div style="font-family:var(--fu);font-size:.7rem;color:var(--tx3)">Start the mission to track achievements.</div></div>
+      <h3 style="margin-top:1.3rem">Event History</h3>
+      <div id="evtHistory" style="font-family:var(--fu);font-size:.72rem;color:var(--tx3)">No cascade events resolved yet.</div>
+      <h3 style="margin-top:1.3rem">🤖 Orchard Advisor — Claude AI (Optional)</h3>
+      <p style="font-family:var(--fu);font-size:.72rem;color:var(--tx2);margin-bottom:.6rem">Ask the Advisor for context-aware guidance. Requires your own Anthropic API key — stored locally in your browser only, never transmitted anywhere else. Optional: the platform works fully without it.</p>
+      <div class="adv-wrap">
+        <div class="adv-key-row">
+          <input type="password" class="adv-key-inp" id="advKey" placeholder="sk-ant-… (stored locally only, never transmitted)">
+          <button class="btn btn-p" onclick="saveAdvKey()">Save Key</button>
+          <button class="btn btn-d" onclick="clearAdvKey()">Clear</button>
+        </div>
+        <textarea class="adv-q" id="advQ" placeholder="Ask about your orchard… e.g. 'What cascade would help most given my current soil health?' or 'What should I plant next in Central NL?'" maxlength="600" oninput="el('advQLen').textContent=this.value.length"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+          <span style="font-family:var(--fu);font-size:.6rem;color:var(--tx3)"><span id="advQLen">0</span>/600 chars</span>
+          <button class="btn btn-p" onclick="askAdvisor()">Ask Advisor ▶</button>
+        </div>
+        <div class="adv-response" id="advResponse">Advisor response will appear here…</div>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- LOGBOOK -->
+<div id="logbook" class="cs rv">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('logbook')"><span class="cs-ico">📓</span><div class="cs-tw"><div class="cs-t">Field Logbook</div><div class="cs-d">Local-only notes stored in your browser — never transmitted anywhere</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <textarea id="noteInp" placeholder="Record site observations, planting dates, cultivar choices, soil test results, harvest weights, weather events, community contacts…" maxlength="2000" oninput="el('noteCnt').textContent=this.value.length"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:.4rem 0 .65rem">
+        <span style="font-family:var(--fu);font-size:.6rem;color:var(--tx3)"><span id="noteCnt">0</span>/2000 · local only · never transmitted</span>
+        <button class="btn btn-p" onclick="saveNote()">💾 Save Note</button>
+      </div>
+      <div id="notesOut"></div>
+      <button class="btn btn-d" style="margin-top:.5rem;font-size:.66rem" onclick="clearNotes()">🗑 Clear All Notes</button>
+    </div>
+  </details>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings-sec" class="cs rv">
+  <details class="cs-det">
+    <summary class="cs-sum" onclick="markRead('settings')"><span class="cs-ico">⚙️</span><div class="cs-tw"><div class="cs-t">Settings &amp; Data Management</div><div class="cs-d">Preferences, export, import, and full reset</div></div><span class="cs-chv">▶</span></summary>
+    <div class="cs-body">
+      <div style="display:grid;gap:.75rem;max-width:420px">
+        <div><label class="set-lbl" for="setNm">Your Name / Group (optional)</label><input type="text" id="setNm" class="set-inp" maxlength="80" placeholder="Community Orchard Collective…" onchange="saveSetting('name',this.value)"></div>
+      </div>
+      <div style="margin-top:.9rem;display:flex;flex-wrap:wrap;gap:.45rem">
+        <button class="btn btn-a" onclick="expData()">⬇️ Export All Data</button>
+        <label class="btn" style="cursor:pointer">⬆️ Import Data<input type="file" id="impFile2" accept=".json" style="display:none" onchange="impData(this)"></label>
+        <button class="btn" onclick="window.print()">🖨️ Print</button>
+        <button class="btn btn-d" onclick="resetAll()">🗑 Reset All Local Data</button>
+      </div>
+      <div style="margin-top:.7rem;font-family:var(--fu);font-size:.66rem;color:var(--tx3)">All data is stored in browser IndexedDB only. Never transmitted. Reset permanently deletes all local data including notes, progress, and game state.</div>
+    </div>
+  </details>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="zh-box">
+    <strong>🌿 Zero-Harm &amp; Anti-Inversion Declaration</strong> — This platform exists solely for community benefit, ecological restoration, and food sovereignty education in Newfoundland and Labrador. It contains no hidden tracking, no telemetry, no auto-send features, no third-party data collection, no advertising, and no coercive mechanisms. All data is stored exclusively in your browser's IndexedDB and is never transmitted anywhere. Claude API calls are opt-in, user-initiated, and require your own API key stored locally only. No legal permissions to plant on any land are granted or implied by this document. Verify land ownership, municipal bylaws, provincial laws, Indigenous community rights and treaty obligations, environmental protections, and road safety before planting anywhere.
+  </div>
+  <p>Synthesised from: NL Dept. of Fisheries, Forestry &amp; Agriculture · AAFC cultivar trial research · University of Guelph horticultural extension · Memorial University NL ecology · Permaculture design principles · Community food sovereignty research. Licensed under <strong style="color:var(--tx2)">CC BY-NC-SA 4.0</strong> · v2.1 Cascade Edition · 2026 · Pure HTML/CSS/JS · Zero external dependencies · Fully offline-capable.</p>
+</footer>
+</div><!-- /app -->
+
+<script>
+/* ================================================================
+   NL FOOD SOVEREIGNTY ORCHARD MISSION — Game Engine v2.1
+   All educational content lives in the HTML above this script.
+   This file only handles: game state, canvas rendering, cascade
+   engine, IndexedDB persistence, event system, and advisor API.
+================================================================ */
+
+/* ---------- SPECIES DATA ---------- */
+var SP = [
+  {id:'wblue', n:'Wild Blueberry', lat:'Vaccinium angustifolium', em:'\ud83e\udec0', zone:'2-6', ph:'4.0-5.5', yrs:'2-3', cost:8, cat:'berry',
+   desc:'NL native. Protect wild stands first - most cost-effective sovereignty asset in the province. Hardy on rocky barrens.',
+   provides:{soil:0,poll:8,comm:3,sov:12}, syns:[{w:'lberry',ch:'NativeAlliance'},{w:'alder',ch:'Nitrogen'},{w:'clover',ch:'Pollinator'}]},
+  {id:'hblue', n:'Highbush Blueberry', lat:'Vaccinium corymbosum', em:'\ud83e\udec0', zone:'4-7', ph:'4.0-5.5', yrs:'3-5', cost:12, cat:'berry',
+   desc:'Larger fruit than wild. Needs pH-amended acidic beds. Plant 2+ cultivars for cross-pollination. Bluecrop, Duke, Spartan.',
+   provides:{soil:0,poll:10,comm:6,sov:13}, syns:[{w:'wblue',ch:'BlueberryBounty'},{w:'lberry',ch:'NativeAlliance'}]},
+  {id:'lberry', n:'Lingonberry / Partridgeberry', lat:'Vaccinium vitis-idaea', em:'\ud83d\udd34', zone:'2-7', ph:'4.0-5.5', yrs:'2-4', cost:10, cat:'berry',
+   desc:'NL iconic evergreen ground berry. Culturally significant. Order specialty nursery plugs. Long shelf-life fruit.',
+   provides:{soil:0,poll:5,comm:8,sov:14}, syns:[{w:'wblue',ch:'NativeAlliance'},{w:'cberry',ch:'BogSovereignty'}]},
+  {id:'straw', n:'Strawberry', lat:'Fragaria ananassa', em:'\ud83c\udf53', zone:'3-8', ph:'5.5-6.5', yrs:'1', cost:5, cat:'berry',
+   desc:'Fastest-producing cultivated fruit in NL. Highest community engagement. Sparkle, Bounty, Kent, Micmac (late).',
+   provides:{soil:3,poll:6,comm:12,sov:8}, syns:[{w:'clover',ch:'GroundGuild'},{w:'comfrey',ch:'Fertility'},{w:'apple',ch:'OrchardGuild'}]},
+  {id:'haskap', n:'Haskap / Honeyberry', lat:'Lonicera caerulea', em:'\ud83d\udfe1', zone:'2-8', ph:'5.5-7.0', yrs:'2-3', cost:12, cat:'berry',
+   desc:'First fruit of the season (June). Zone 2 hardy. Must plant compatible pairs: Borealis+Tundra or Aurora+Solo.',
+   provides:{soil:0,poll:10,comm:8,sov:13}, syns:[{w:'haskap',ch:'HaskaPair'},{w:'wblue',ch:'EarlySurge'}]},
+  {id:'rcurr', n:'Red Currant', lat:'Ribes rubrum', em:'\ud83c\udf52', zone:'3-7', ph:'5.5-7.0', yrs:'2-3', cost:7, cat:'berry',
+   desc:'Most reliable NL cultivated fruit. Self-fertile, shade-tolerant, wind-tolerant. Red Lake, Stanza, Cascade.',
+   provides:{soil:2,poll:4,comm:6,sov:10}, syns:[{w:'bcurr',ch:'CurrantAlliance'},{w:'alder',ch:'Nitrogen'},{w:'goose',ch:'RibesBurst'}]},
+  {id:'bcurr', n:'Black Currant', lat:'Ribes nigrum', em:'\u26ab', zone:'3-6', ph:'5.5-7.0', yrs:'2-3', cost:7, cat:'berry',
+   desc:'4x more vitamin C than lemon. Ben Sarek, Ben Alder, Titania. Plant 2 cultivars for best yield.',
+   provides:{soil:2,poll:4,comm:5,sov:11}, syns:[{w:'rcurr',ch:'CurrantAlliance'},{w:'comfrey',ch:'Fertility'}]},
+  {id:'goose', n:'Gooseberry', lat:'Ribes uva-crispa', em:'\ud83d\udfe2', zone:'3-6', ph:'5.5-7.0', yrs:'2-3', cost:7, cat:'berry',
+   desc:'Hardy, self-fertile, heavy-cropping. Pixwell (thornless), Invicta (large). Check pine blister rust regulations.',
+   provides:{soil:2,poll:5,comm:6,sov:9}, syns:[{w:'rcurr',ch:'RibesBurst'},{w:'alder',ch:'Nitrogen'}]},
+  {id:'rasp', n:'Raspberry', lat:'Rubus idaeus', em:'\ud83c\udf47', zone:'3-6', ph:'5.5-6.5', yrs:'2', cost:6, cat:'berry',
+   desc:'Rapid from canes. Boyne (cold-hardy), Festival (NL performance), Nova. Biennial canes; prune after harvest.',
+   provides:{soil:2,poll:7,comm:10,sov:9}, syns:[{w:'alder',ch:'Nitrogen'},{w:'clover',ch:'Pollinator'}]},
+  {id:'saskat', n:'Saskatoon', lat:'Amelanchier alnifolia', em:'\ud83c\udf38', zone:'2-6', ph:'5.5-7.5', yrs:'3-4', cost:9, cat:'berry',
+   desc:'Zone 2 hardy shrub. Beautiful spring bloom. Culturally significant. Smoky, Northline cultivars. Propagate from suckers.',
+   provides:{soil:3,poll:8,comm:10,sov:11}, syns:[{w:'wblue',ch:'NativeAlliance'},{w:'caragana',ch:'Shelter'}]},
+  {id:'cberry', n:'Cranberry', lat:'Vaccinium macrocarpon', em:'\ud83d\udd34', zone:'2-5', ph:'4.0-5.0', yrs:'3-5', cost:9, cat:'berry',
+   desc:'Native V. oxycoccos in NL bogs - protect first. Large cranberry needs acidic bog beds with water management.',
+   provides:{soil:0,poll:4,comm:5,sov:10}, syns:[{w:'lberry',ch:'BogSovereignty'}]},
+  {id:'alder', n:'Speckled Alder', lat:'Alnus incana', em:'\ud83c\udf3f', zone:'2-8', ph:'5.0-7.0', yrs:'1', cost:3, cat:'support',
+   desc:'NL native nitrogen-fixer. Windbreak, wildlife habitat. Roots from cuttings in water overnight. Free locally.',
+   provides:{soil:18,poll:3,comm:2,sov:4}, syns:[{w:'apple',ch:'Nitrogen'},{w:'rasp',ch:'Nitrogen'},{w:'caragana',ch:'Windbreak'}]},
+  {id:'caragana', n:'Siberian Peashrub', lat:'Caragana arborescens', em:'\ud83c\udf33', zone:'2-7', ph:'5.5-7.5', yrs:'2', cost:4, cat:'support',
+   desc:'Zone 2 hardy N-fixing windbreak shrub. Edible seeds. Non-invasive in NL. Use as windbreak row and N source.',
+   provides:{soil:14,poll:2,comm:3,sov:5}, syns:[{w:'alder',ch:'Windbreak'},{w:'saskat',ch:'Shelter'}]},
+  {id:'comfrey', n:'Comfrey (Bocking 14)', lat:'Symphytum uplandicum', em:'\ud83c\udf3f', zone:'3-9', ph:'5.5-7.5', yrs:'1', cost:4, cat:'support',
+   desc:'Sterile Bocking 14 ONLY. Dynamic mineral accumulator. Deep taproot mines subsoil nutrients. 1-3 per fruit tree. Never near waterways.',
+   provides:{soil:20,poll:4,comm:1,sov:3}, syns:[{w:'apple',ch:'OrchardGuild'},{w:'straw',ch:'Fertility'},{w:'bcurr',ch:'Fertility'}]},
+  {id:'clover', n:'Clover + Vetch Mix', lat:'Trifolium Vicia spp.', em:'\ud83c\udf3c', zone:'3-8', ph:'5.5-7.0', yrs:'1', cost:2, cat:'support',
+   desc:'Nitrogen-fixing cover crop and pollinator support. Inoculate with rhizobia before sowing. White clover under trees.',
+   provides:{soil:12,poll:15,comm:2,sov:3}, syns:[{w:'wblue',ch:'Pollinator'},{w:'rasp',ch:'Pollinator'},{w:'straw',ch:'GroundGuild'}]},
+  {id:'apple', n:'Apple (Novamac)', lat:'Malus domestica', em:'\ud83c\udf4e', zone:'4-8', ph:'6.0-7.0', yrs:'4-7', cost:25, cat:'tree',
+   desc:'Earliest scab-resistant apple for NL. Semi-dwarf M.26 rootstock. Must cross-pollinate - always pair with Dolgo crabapple.',
+   provides:{soil:1,poll:5,comm:15,sov:18}, syns:[{w:'dolgo',ch:'AppleBloom'},{w:'comfrey',ch:'OrchardGuild'},{w:'alder',ch:'Nitrogen'}]},
+  {id:'dolgo', n:'Dolgo Crabapple', lat:'Malus Dolgo', em:'\ud83c\udf4e', zone:'3-8', ph:'6.0-7.0', yrs:'3-5', cost:20, cat:'tree',
+   desc:'Zone 3 hardy. Universal pollinator for ALL apple cultivars. Brilliant red edible fruit. Never omit from any apple planting.',
+   provides:{soil:1,poll:18,comm:10,sov:12}, syns:[{w:'apple',ch:'AppleBloom'},{w:'haskap',ch:'EarlySurge'}]},
+  {id:'cherry', n:'Sour Cherry (North Star)', lat:'Prunus cerasus', em:'\ud83c\udf52', zone:'4-7', ph:'6.0-7.0', yrs:'3-5', cost:22, cat:'tree',
+   desc:'More cold-hardy than sweet cherry. Self-fertile dwarf. Excellent flavour. Avoid sweet cherry in most NL.',
+   provides:{soil:1,poll:6,comm:12,sov:15}, syns:[{w:'comfrey',ch:'OrchardGuild'},{w:'clover',ch:'Pollinator'}]},
+  {id:'plum', n:'Plum (Damson)', lat:'Prunus domestica', em:'\ud83d\udfe3', zone:'4-6', ph:'6.0-7.0', yrs:'4-6', cost:22, cat:'tree',
+   desc:'Very productive, self-fertile, excellent for jam. Watch for black knot. Best for West Coast and Avalon Zone 5+.',
+   provides:{soil:1,poll:5,comm:10,sov:14}, syns:[{w:'comfrey',ch:'OrchardGuild'},{w:'alder',ch:'Nitrogen'}]},
+  {id:'pear', n:'Pear (Ure)', lat:'Pyrus communis', em:'\ud83c\udf50', zone:'4-6', ph:'6.0-7.0', yrs:'5-8', cost:28, cat:'tree',
+   desc:'Prairie-bred, very hardy, good keeper. Slowest investment. Fire blight risk. Needs 2 compatible varieties.',
+   provides:{soil:1,poll:4,comm:8,sov:16}, syns:[{w:'apple',ch:'TreeMatrix'},{w:'comfrey',ch:'OrchardGuild'}]}
+];
+
+/* ---------- CASCADE CHAINS ---------- */
+var CC = {
+  Nitrogen:{n:'Nitrogen Cascade',em:'\u2697\ufe0f',ch:['N-Fixation','Soil Enrichment','Root Uptake','Yield Boost'],col:'#4ade80',bonus:{soil:12,sov:5}},
+  Pollinator:{n:'Pollinator Flood',em:'\ud83d\udc1d',ch:['Flower Bloom','Bee Attraction','Fruit Set','Sovereignty'],col:'#fcd34d',bonus:{poll:12,sov:6}},
+  NativeAlliance:{n:'Native Berry Alliance',em:'\ud83e\udec0',ch:['Ecological Resonance','Cultural Memory','Community Pride','Deep Sovereignty'],col:'#a78bfa',bonus:{sov:20,comm:12,know:8}},
+  OrchardGuild:{n:'Orchard Guild',em:'\ud83c\udf33',ch:['Nutrient Cycle','Moisture Retention','Guild Resilience','Maturity'],col:'#22d3ee',bonus:{soil:16,sov:14,comm:8}},
+  Fertility:{n:'Fertility Cascade',em:'\ud83c\udf31',ch:['Mineral Mining','Mulch Layer','Soil Biology','Fertility Loop'],col:'#86efac',bonus:{soil:18,sov:6}},
+  AppleBloom:{n:'Apple Bloom',em:'\ud83c\udf4e',ch:['Pollen Transfer','Fruit Set','Harvest Surplus','Community Abundance'],col:'#f472b6',bonus:{poll:15,comm:18,sov:22}},
+  GroundGuild:{n:'Ground Cover Guild',em:'\ud83c\udf3c',ch:['Weed Suppression','Moisture Lock','Root Habitat','Resilience'],col:'#fde68a',bonus:{soil:12,water:8}},
+  CurrantAlliance:{n:'Currant Alliance',em:'\u2764\ufe0f',ch:['Companion Bloom','Enhanced Pollination','Yield Amplification','Sovereignty'],col:'#fb7185',bonus:{sov:12,comm:10,poll:6}},
+  HaskaPair:{n:'Haskap Cross-Pollination',em:'\ud83c\udf1f',ch:['Compatible Bloom','Full Fruit Set','First Harvest','Early Sovereignty'],col:'#fcd34d',bonus:{sov:18,poll:12,comm:8}},
+  BlueberryBounty:{n:'Blueberry Bounty',em:'\ud83e\udec0',ch:['Habitat Mix','Extended Season','Yield Surge','Community Feast'],col:'#818cf8',bonus:{sov:14,comm:10,poll:8}},
+  BogSovereignty:{n:'Bog Sovereignty',em:'\ud83d\udfe4',ch:['Bog Ecology','Native Resilience','Wild Harvest','Heritage'],col:'#a78bfa',bonus:{sov:15,know:10,comm:8}},
+  Windbreak:{n:'Windbreak Synergy',em:'\ud83c\udf2c\ufe0f',ch:['Wind Deflection','Microclimate','Frost Reduction','Survival'],col:'#67e8f9',bonus:{soil:8,sov:8,comm:5}},
+  Shelter:{n:'Shelter Synergy',em:'\ud83c\udfd5\ufe0f',ch:['Shelter Creation','Microclimate','Frost Buffer','Production'],col:'#86efac',bonus:{soil:12,sov:9,comm:6}},
+  EarlySurge:{n:'Early Season Surge',em:'\ud83c\udf05',ch:['Early Harvest','Community Momentum','Volunteer Surge','Expansion'],col:'#fcd34d',bonus:{comm:14,sov:10}},
+  RibesBurst:{n:'Ribes Burst',em:'\ud83c\udf53',ch:['Habitat Diversity','Pollinator Surge','Cross-Yield','Alliance'],col:'#fb7185',bonus:{poll:10,sov:8}},
+  TreeMatrix:{n:'Tree Orchard Matrix',em:'\ud83c\udf32',ch:['Staggered Bloom','Season Extension','Harvest Matrix','Full Sovereignty'],col:'#22d3ee',bonus:{sov:20,comm:15,know:8}}
+};
+
+/* ---------- EVENTS ---------- */
+var EV = [
+  {id:'frost',n:'May Frost Alert',em:'\u2744\ufe0f',trig:{yr:1,sea:0},
+   desc:'Environment Canada has issued a frost advisory for -3C overnight. Your strawberry blossoms and haskap are vulnerable.',
+   choices:[
+    {lbl:'Cover overnight with fleece',eff:'Frost mitigated. Blossoms protected. Minor labour cost.',res:{water:-8,comm:3,sov:4}},
+    {lbl:'Accept some blossom loss',eff:'Some damage. Learned which species are truly frost-hardy.',res:{sov:-5,know:5}},
+    {lbl:'Call emergency community volunteer cover',eff:'Community mobilised - lasting volunteer bonds formed!',res:{comm:18,sov:2,seeds:8}}]},
+  {id:'moose',n:'Moose in the Orchard',em:'\ud83e\udd8c',trig:{yr:1,sea:2},
+   desc:'A cow moose and her calf have entered your orchard area and are browsing young apple trees. Several tree guards are knocked loose.',
+   choices:[
+    {lbl:'Install emergency perimeter fencing',eff:'Fencing installed. Trees protected. Worth every dollar.',res:{seeds:-20,sov:8,comm:2}},
+    {lbl:'Relocate vulnerable trees inside existing fence',eff:'Transplant shock reduced some yields. Lesson learned.',res:{seeds:-5,sov:-4,know:6}},
+    {lbl:'Install spiral guards on every young trunk tonight',eff:'Guards in place. Full fencing still critical priority.',res:{seeds:-8,sov:3,comm:5}}]},
+  {id:'volunteers',n:'Volunteer Surge!',em:'\ud83e\udd1d',trig:{comm:40},
+   desc:'Your community orchard work has attracted attention. Eight new enthusiastic volunteers want to help. Their knowledge is limited - what is your training focus?',
+   choices:[
+    {lbl:'Propagation training',eff:'New propagation cohort trained. Plant supply costs dropping.',res:{seeds:20,comm:8,sov:6,know:8}},
+    {lbl:'Pruning and seasonal maintenance',eff:'Orchard care quality improved significantly.',res:{soil:8,comm:10,sov:8}},
+    {lbl:'Community food sovereignty outreach',eff:'Network effect: three new community orchards in planning.',res:{comm:22,sov:12,seeds:5}}]},
+  {id:'blight',n:'Fire Blight Alert',em:'\ud83d\udd25',trig:{planted:'pear',yr:3},
+   desc:'Your pear trees show the shepherd\u2019s crook wilting of fire blight. This bacterial disease spreads rapidly in wet weather.',
+   choices:[
+    {lbl:'Prune 30cm below lesions with sterilised tools',eff:'Blight contained. Sterilisation now part of community practice.',res:{soil:-2,sov:3,know:8}},
+    {lbl:'Apply copper sulphate spray to vulnerable trees',eff:'Spread halted. Added copper spray to spring protocol.',res:{seeds:-5,sov:4,know:6}},
+    {lbl:'Remove severely affected trees',eff:'Painful but correct. Saved the remaining trees.',res:{sov:-8,know:10,seeds:5}}]},
+  {id:'drought',n:'Summer Drought',em:'\u2600\ufe0f',trig:{yr:2,sea:1},
+   desc:'A six-week dry spell is stressing newly established plantings. Water is limited. How do you prioritise?',
+   choices:[
+    {lbl:'Deep water tree fruits first',eff:'Tree fruits survived. Berry plants stressed but resilient.',res:{water:-20,sov:6,comm:-3}},
+    {lbl:'Mulch everything immediately',eff:'Mulch extended water retention two to three weeks.',res:{seeds:-8,water:-8,soil:10,sov:5}},
+    {lbl:'Install drip irrigation this weekend',eff:'Permanent infrastructure in place. Last drought emergency.',res:{seeds:-25,water:30,sov:10,know:5}}]},
+  {id:'harvest',n:'First Community Harvest!',em:'\ud83c\udf3e',trig:{planted:'straw',yr:2,sea:1},
+   desc:'Your strawberries are producing their first significant harvest. This is the moment the community has been waiting for.',
+   choices:[
+    {lbl:'Organise a public pick-your-own event',eff:'50 people came! Food sovereignty became real for the first time.',res:{comm:22,sov:15,seeds:10}},
+    {lbl:'Preserve and stock a community food pantry',eff:'40 jars of jam distributed. Preservation skills spread.',res:{comm:12,sov:18,know:5}},
+    {lbl:'Bring local school students for a harvest lesson',eff:'Children now know where food comes from.',res:{comm:15,sov:12,know:12,seeds:5}}]},
+  {id:'council',n:'Municipal Council Meeting',em:'\ud83c\udfdb\ufe0f',trig:{sov:35,yr:3},
+   desc:'You have been invited to present the food sovereignty mission to your municipal council. How do you frame your case?',
+   choices:[
+    {lbl:'Economic resilience: food import costs, supply chain risk',eff:'Council approved two new community orchard sites.',res:{comm:15,sov:18,seeds:15}},
+    {lbl:'Ecological and cultural heritage case',eff:'Council committed to long-term land stewardship policy.',res:{comm:20,sov:15,know:8}},
+    {lbl:'Community health and intergenerational wellbeing',eff:'Community health board became ally. Funding secured.',res:{comm:25,sov:12,know:10}}]},
+  {id:'partner',n:'Indigenous Partnership',em:'\ud83c\udf3f',trig:{comm:55,yr:4},
+   desc:'A Mi\u2019kmaw elder has expressed interest in collaborating, sharing traditional knowledge about local berry species and land protocols.',
+   choices:[
+    {lbl:'Formalise respectful co-stewardship agreement',eff:'Deep partnership formed. Traditional and contemporary knowledge merging.',res:{comm:30,sov:25,know:20}},
+    {lbl:'Begin with informal knowledge exchange visit',eff:'First visit profound. Long-term relationship building underway.',res:{comm:15,sov:12,know:15}}]},
+  {id:'bog',n:'Bog Discovery!',em:'\ud83d\udfe4',trig:{know:20,region:'central'},
+   desc:'A community member has found a large unmapped partridgeberry and bakeapple population on a nearby bog.',
+   choices:[
+    {lbl:'Document and report to provincial ecology office',eff:'Bog formally documented. Protection petition underway.',res:{sov:15,know:12,comm:8}},
+    {lbl:'Establish sustainable community harvest protocol',eff:'Community harvest tradition formalised.',res:{comm:20,sov:12,know:8}},
+    {lbl:'Contact relevant Indigenous governance body',eff:'Partnership formed. Deep co-stewardship model established.',res:{comm:25,sov:20,know:15}}]},
+  {id:'nursery',n:'Nursery Breakthrough!',em:'\ud83c\udf31',trig:{research:'propagation'},
+   desc:'Your propagation nursery has achieved 95% success on black currant cuttings. You have 200 extra rooted cuttings ready.',
+   choices:[
+    {lbl:'Distribute free to community',eff:'200 new currant plants in community gardens.',res:{comm:22,sov:15,seeds:8}},
+    {lbl:'Establish as permanent plant library',eff:'Plant library established. Permanent community asset.',res:{know:10,sov:12,seeds:20}}]}
+];
+
+/* ---------- RESEARCH NODES ---------- */
+var RS = [
+  {id:'berry-basics',n:'Berry Fundamentals',tier:1,cost:8,avail:true,
+   desc:'Core berry species mastery. Unlocks depth knowledge and cascade bonuses.',
+   effects:'All berry cascade bonuses +10%. Unlocks propagation research.',
+   unlocks:['propagation','mycorrhizal']},
+  {id:'tree-basics',n:'Tree Fruit Fundamentals',tier:1,cost:10,avail:true,
+   desc:'Apple, pear, cherry, and plum fundamentals. Rootstock selection.',
+   effects:'Unlocks advanced guild design research. Tree fruit sov value +4.',
+   unlocks:['guild-design','climate']},
+  {id:'soil-basics',n:'Soil Science Foundations',tier:1,cost:8,avail:true,
+   desc:'pH management, drainage, microclimate assessment.',
+   effects:'+8 Soil Health on unlock. Nitrogen cascade bonus +5.',
+   unlocks:['mycorrhizal','cascade-1']},
+  {id:'propagation',n:'Propagation Mastery',tier:2,cost:14,avail:false,
+   desc:'Hardwood cuttings, runners, division, basic grafting.',
+   effects:'+15 seeds every 3 seasons. Nursery Breakthrough event unlocked.',
+   unlocks:['seed-bank']},
+  {id:'mycorrhizal',n:'Mycorrhizal Networks',tier:2,cost:16,avail:false,
+   desc:'Fungal ecology, soil web dynamics.',
+   effects:'All cascade bonuses +15%. Fertility Cascade bonus doubled.',
+   unlocks:['guild-design']},
+  {id:'pollinator-res',n:'Pollinator Guardianship',tier:2,cost:12,avail:true,
+   desc:'Native bee ecology, habitat restoration, wildflower polycultures.',
+   effects:'+8 Pollinator Index permanent. Pollinator Flood cascade +10.',
+   unlocks:['guild-design']},
+  {id:'community-org',n:'Community Organizing',tier:2,cost:12,avail:true,
+   desc:'Volunteer training, community governance, food systems advocacy.',
+   effects:'+10 Community Strength. Council Meeting event improved.',
+   unlocks:['provincial']},
+  {id:'guild-design',n:'Advanced Guild Design',tier:3,cost:20,avail:false,
+   desc:'Full polyculture design: 7-layer food forests, integrated pest management.',
+   effects:'Orchard Guild cascade 1.5x. TreeMatrix chain unlocked.',
+   unlocks:['century','cascade-2']},
+  {id:'climate',n:'Climate Adaptation',tier:3,cost:18,avail:false,
+   desc:'Zone shift planning, frost-hardy cultivar selection, season extension.',
+   effects:'Climate shift event available. Tree fruit survival +15%.',
+   unlocks:['century']},
+  {id:'seed-bank',n:'Community Seed Bank',tier:3,cost:18,avail:false,
+   desc:'Seed saving, cultivar conservation, open-pollinated plant library.',
+   effects:'+20 seeds every 5 seasons. Seed Swap event unlocked.',
+   unlocks:['provincial']},
+  {id:'indigenous-int',n:'Indigenous Knowledge Integration',tier:3,cost:22,avail:false,
+   desc:'Traditional ecological knowledge, land protocols, co-stewardship.',
+   effects:'Indigenous Partnership event enabled. NativeAlliance cascade x2.',
+   unlocks:['provincial','recursive']},
+  {id:'provincial',n:'Provincial Network Node',tier:4,cost:30,avail:false,
+   desc:'Your orchard becomes a hub in a province-wide food sovereignty network.',
+   effects:'All community cascades x1.5. Provincial recognition event.',
+   unlocks:['recursive']},
+  {id:'century',n:'Century Vision',tier:4,cost:28,avail:false,
+   desc:'Long-horizon planning: 10, 25, 100-year food forest architecture.',
+   effects:'Sovereignty cap raised to 200. 100-year timeline fully unlocked.',
+   unlocks:[]},
+  {id:'cascade-1',n:'Cascade Foundations',tier:2,cost:15,avail:false,
+   desc:'Formal understanding of cascade chain mechanics.',
+   effects:'All chain bonuses +10%. WindbreakForce chain activated.',
+   unlocks:['cascade-2']},
+  {id:'cascade-2',n:'Cascade Mastery',tier:3,cost:24,avail:false,
+   desc:'Deep cascade physics. Multi-hop chain engineering.',
+   effects:'All cascade bonuses +25%. Recursive cascade loops possible.',
+   unlocks:['recursive']},
+  {id:'recursive',n:'Recursive Harvest Protocol',tier:4,cost:35,avail:false,
+   desc:'A self-improving system where each harvest feeds back into planning, planting, and community.',
+   effects:'All passive resource gains x2. Recursive cascade unlocked.',
+   unlocks:[]}
+];
+
+/* ---------- ACHIEVEMENTS ---------- */
+var AH = [
+  {id:'first-plant',n:'First Seed',em:'\ud83c\udf31',desc:'Place your first species.',done:false,cond:function(){return G.planted.length>=1;}},
+  {id:'berry-pioneer',n:'Berry Pioneer',em:'\ud83e\udec0',desc:'Have 5+ berry species planted.',done:false,cond:function(){return G.planted.filter(function(p){var s=spById(p.sid);return s&&s.cat==='berry';}).length>=5;}},
+  {id:'first-cascade',n:'First Cascade',em:'\u26a1',desc:'Trigger your first cascade collision.',done:false,cond:function(){return G.res.cascades>=1;}},
+  {id:'nitrogen-master',n:'Nitrogen Master',em:'\u2697\ufe0f',desc:'Trigger 3 Nitrogen Cascades.',done:false,cond:function(){return (G.chainC['Nitrogen']||0)>=3;}},
+  {id:'pollinator-g',n:'Pollinator Guardian',em:'\ud83d\udc1d',desc:'Reach Pollinator Index 70+.',done:false,cond:function(){return G.res.poll>=70;}},
+  {id:'soil-alchemist',n:'Soil Alchemist',em:'\ud83e\udea8',desc:'Reach Soil Health 80+.',done:false,cond:function(){return G.res.soil>=80;}},
+  {id:'comm-builder',n:'Community Builder',em:'\ud83e\udd1d',desc:'Reach Community Strength 65+.',done:false,cond:function(){return G.res.comm>=65;}},
+  {id:'tree-tender',n:'Tree Tender',em:'\ud83c\udf4e',desc:'Plant all 5 tree fruit species.',done:false,cond:function(){var ids=['apple','dolgo','cherry','plum','pear'];return ids.every(function(id){return G.planted.some(function(p){return p.sid===id;});});}},
+  {id:'event-survivor',n:'Event Survivor',em:'\u2694\ufe0f',desc:'Resolve 5 cascade events.',done:false,cond:function(){return G.evtHistory.length>=5;}},
+  {id:'scholar',n:'Knowledge Scholar',em:'\ud83d\udcda',desc:'Read all 18 guide sections.',done:false,cond:function(){return G.readSections.length>=18;}},
+  {id:'cascade-master',n:'Cascade Master',em:'\ud83c\udf0a',desc:'Trigger 20 cascade collisions.',done:false,cond:function(){return G.res.cascades>=20;}},
+  {id:'native-ally',n:'Native Ally',em:'\ud83c\udf3f',desc:'Trigger the Native Berry Alliance.',done:false,cond:function(){return (G.chainC['NativeAlliance']||0)>=1;}},
+  {id:'apple-bloom',n:'Apple Bloom',em:'\ud83c\udf38',desc:'Trigger the Apple Bloom cascade.',done:false,cond:function(){return (G.chainC['AppleBloom']||0)>=1;}},
+  {id:'food-sovereign',n:'Food Sovereign',em:'\ud83c\udfc6',desc:'Reach Sovereignty Score 80.',done:false,cond:function(){return G.res.sov>=80;}},
+  {id:'full-orchard',n:'Full Orchard',em:'\ud83c\udf33',desc:'Plant all 12 orchard nodes.',done:false,cond:function(){return G.planted.length>=12;}}
+];
+
+/* ---------- SCENARIOS ---------- */
+var SCENARIOS = [
+  {id:'gardener',n:'Kitchen Gardener',role:'Backyard Practitioner',em:'\ud83c\udfe1',
+   desc:'Starting small, learning by doing. Limited space and budget, intimate knowledge of your land.',
+   bonus:'Berry species cost 1 fewer seed each.',
+   start:{seeds:50,soil:25,poll:15,water:80,comm:10,sov:0,know:5,cascades:0},
+   sp:['wblue','straw','rcurr','rasp','alder','clover']},
+  {id:'steward',n:'School Steward',role:'Institutional Site Coordinator',em:'\ud83c\udfeb',
+   desc:'Managing a school or library site. Strong community access, curriculum opportunities.',
+   bonus:'Community resource gains +25%.',
+   start:{seeds:70,soil:20,poll:20,water:70,comm:30,sov:0,know:8,cascades:0},
+   sp:['straw','rcurr','bcurr','haskap','saskat','clover','comfrey']},
+  {id:'outport',n:'Outport Revivalist',role:'Remote Community Leader',em:'\ud83c\udfa3',
+   desc:'Reviving food production in a remote outport. High independence drive.',
+   bonus:'All native species cost 40% fewer seeds.',
+   start:{seeds:40,soil:30,poll:25,water:90,comm:20,sov:5,know:6,cascades:0},
+   sp:['wblue','lberry','goose','rasp','alder','caragana']},
+  {id:'coordinator',n:'Provincial Coordinator',role:'Food Systems Policy Strategist',em:'\ud83c\udfdb\ufe0f',
+   desc:'Working at provincial scale. Strong networks, policy leverage.',
+   bonus:'Research costs reduced 20%.',
+   start:{seeds:100,soil:15,poll:15,water:60,comm:40,sov:10,know:15,cascades:0},
+   sp:['apple','dolgo','cherry','alder','caragana','clover']},
+  {id:'guardian',n:'Land Guardian',role:'Indigenous-Led Stewardship',em:'\ud83c\udf3f',
+   desc:'Centering traditional ecological knowledge, cultural sovereignty, and land protocols.',
+   bonus:'All native species cascade bonuses x1.5.',
+   start:{seeds:45,soil:35,poll:30,water:85,comm:25,sov:8,know:18,cascades:0},
+   sp:['wblue','lberry','cberry','saskat','haskap','alder']},
+  {id:'research',n:'Research Node',role:'Extension and Science Collaborator',em:'\ud83d\udd2c',
+   desc:'University or extension service affiliated. Strong knowledge base.',
+   bonus:'Research costs reduced 30%. Knowledge gains x1.5.',
+   start:{seeds:60,soil:20,poll:18,water:70,comm:15,sov:0,know:25,cascades:0},
+   sp:['wblue','hblue','apple','dolgo','pear','comfrey','clover']}
+];
+
+var REGIONS = [
+  {id:'avalon',n:'Avalon / St. John\u2019s',zone:'5b-6a'},
+  {id:'westcoast',n:'West Coast / Codroy',zone:'5b'},
+  {id:'central',n:'Central NL',zone:'4b-5a'},
+  {id:'northern',n:'Northern Peninsula',zone:'3b-4b'},
+  {id:'labrador',n:'Labrador',zone:'1-3'},
+  {id:'coastal',n:'Coastal Exposed',zone:'all'}
+];
+
+/* ---------- ORCHARD GRID: 3 columns x 4 rows = 12 nodes ---------- */
+var GRID_NODES = [];
+(function() {
+  for (var r = 0; r < 4; r++) {
+    for (var c = 0; c < 3; c++) {
+      GRID_NODES.push({id: r*3+c, row: r, col: c, x: 0.17+c*0.33, y: 0.13+r*0.25});
+    }
+  }
+})();
+
+var GRID_ADJ = {};
+GRID_NODES.forEach(function(n) {
+  var adj = [];
+  GRID_NODES.forEach(function(m) {
+    var dr = Math.abs(n.row - m.row), dc = Math.abs(n.col - m.col);
+    if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) adj.push(m.id);
+  });
+  GRID_ADJ[n.id] = adj;
+});
+
+/* ---------- GAME STATE ---------- */
+var G = {
+  scenario: null, region: 'avalon',
+  year: 1, season: 0,
+  res: {seeds:0, soil:0, poll:0, water:0, comm:0, sov:0, know:0, cascades:0},
+  planted: [],
+  readSections: [],
+  research: {unlocked:[], points:0},
+  achievements: [],
+  evtHistory: [], evtTimer: 0,
+  chainC: {},
+  notes: [], settings: {},
+  selSp: null, selNode: null,
+  advKey: '',
+  started: false
+};
+var SEASONS = ['Spring','Summer','Autumn','Winter'];
+
+/* ---------- INDEXED DB ---------- */
+var _db = null;
+function dbOpen() {
+  return new Promise(function(res, rej) {
+    if (_db) { res(_db); return; }
+    var r = indexedDB.open('nl_cascade_v21', 1);
+    r.onupgradeneeded = function(e) {
+      var d = e.target.result;
+      if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+    };
+    r.onsuccess = function(e) { _db = e.target.result; res(_db); };
+    r.onerror = function(e) { rej(e); };
+  });
+}
+function dbSet(k, v) {
+  return dbOpen().then(function(d) {
+    return new Promise(function(res, rej) {
+      var tx = d.transaction('kv', 'readwrite');
+      var req = tx.objectStore('kv').put(v, k);
+      req.onsuccess = res;
+      req.onerror = rej;
+    });
+  }).catch(function() {});
+}
+function dbGet(k) {
+  return dbOpen().then(function(d) {
+    return new Promise(function(res) {
+      var tx = d.transaction('kv', 'readonly');
+      var req = tx.objectStore('kv').get(k);
+      req.onsuccess = function(e) { res(e.target.result); };
+      req.onerror = function() { res(null); };
+    });
+  }).catch(function() { return null; });
+}
+function san(s) {
+  if (typeof s !== 'string') return '';
+  var d = document.createElement('div');
+  d.textContent = s.trim().slice(0, 2000);
+  return d.innerHTML;
+}
+
+/* ---------- HELPERS ---------- */
+function spById(id) { return SP.find(function(s) { return s.id === id; }); }
+function el(id) { return document.getElementById(id); }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+
+/* ---------- SAVE / LOAD ---------- */
+function saveState() {
+  var sv = {
+    v: 3, year: G.year, season: G.season, res: G.res,
+    planted: G.planted, readSections: G.readSections,
+    research: G.research, achievements: G.achievements,
+    evtHistory: G.evtHistory, evtTimer: G.evtTimer,
+    chainC: G.chainC, notes: G.notes, settings: G.settings,
+    scenario: G.scenario, region: G.region, started: G.started
+  };
+  dbSet('gs', sv);
+}
+function loadState() {
+  return Promise.all([dbGet('gs'), dbGet('advkey')]).then(function(r) {
+    var sv = r[0], key = r[1];
+    if (key) { G.advKey = key; var ki = el('advKey'); if (ki) ki.value = key; }
+    renderScenarios();
+    renderRegions();
+    if (!sv || !sv.scenario) { return; }
+    G.year = sv.year || 1; G.season = sv.season || 0;
+    G.res = sv.res || G.res;
+    G.planted = sv.planted || [];
+    G.readSections = sv.readSections || [];
+    G.research = sv.research || G.research;
+    G.achievements = sv.achievements || [];
+    G.evtHistory = sv.evtHistory || [];
+    G.evtTimer = sv.evtTimer || 0;
+    G.chainC = sv.chainC || {};
+    G.notes = sv.notes || [];
+    G.settings = sv.settings || {};
+    G.scenario = sv.scenario;
+    G.region = sv.region || 'avalon';
+    G.started = sv.started || false;
+    renderScenarios();
+    renderRegions();
+    if (G.started) activateGame();
+  });
+}
+
+/* ---------- SCENARIO & REGION SELECT ---------- */
+var _selScen = null, _selRgn = 'avalon';
+
+function renderScenarios() {
+  var g = el('scenGrid');
+  if (!g) return;
+  if (G.scenario) _selScen = G.scenario;
+  g.innerHTML = SCENARIOS.map(function(sc) {
+    return '<div class="scen-card' + (sc.id === _selScen ? ' sel' : '') + '" onclick="selScen(\'' + sc.id + '\')">' +
+      '<div class="sc-ico">' + sc.em + '</div>' +
+      '<div class="sc-nm">' + sc.n + '</div>' +
+      '<div class="sc-role">' + sc.role + '</div>' +
+      '<div class="sc-desc">' + sc.desc + '</div>' +
+      '<div class="sc-bonus">\u2b50 ' + sc.bonus + '</div></div>';
+  }).join('');
+}
+
+function renderRegions() {
+  var g = el('rgnGrid');
+  if (!g) return;
+  if (G.region) _selRgn = G.region;
+  g.innerHTML = REGIONS.map(function(r) {
+    var active = (r.id === _selRgn);
+    return '<div style="background:rgba(5,14,8,.7);border:1px solid ' + (active?'var(--g1)':'var(--bdr)') + ';border-radius:var(--rad);padding:.5rem .7rem;cursor:pointer;transition:var(--tr);font-family:var(--fu);font-size:.7rem;color:' + (active?'var(--g1)':'var(--tx2)') + '" onclick="selRgn(\'' + r.id + '\')">' +
+      r.n + '<div style="font-size:.58rem;color:var(--tx3)">Zone ' + r.zone + '</div></div>';
+  }).join('');
+}
+
+function selScen(id) {
+  _selScen = id;
+  renderScenarios();
+  checkLaunch();
+}
+function selRgn(id) {
+  _selRgn = id;
+  renderRegions();
+  checkLaunch();
+}
+function checkLaunch() {
+  var btn = el('launchBtn');
+  if (btn) btn.disabled = !(_selScen && _selRgn);
+}
+
+function launchGame() {
+  if (!_selScen) return;
+  G.scenario = _selScen;
+  G.region = _selRgn;
+  var sc = SCENARIOS.find(function(s) { return s.id === G.scenario; });
+  if (!sc) return;
+  G.res = JSON.parse(JSON.stringify(sc.start));
+  G.planted = []; G.readSections = []; G.research = {unlocked:[], points:0};
+  G.achievements = []; G.evtHistory = []; G.chainC = {}; G.evtTimer = 0;
+  G.started = true;
+  saveState();
+  activateGame();
+}
+
+function activateGame() {
+  var btn = el('seasonBtn');
+  if (btn) btn.disabled = false;
+  updateTopBar();
+  renderResBar();
+  renderSpPanel();
+  renderResearchGrid();
+  renderAchievements();
+  renderNotes();
+  updateHUD();
+  initOrchardCanvas();
+  var scName = (SCENARIOS.find(function(s){ return s.id===G.scenario; }) || {n:G.scenario}).n;
+  var rgName = (REGIONS.find(function(r){ return r.id===G.region; }) || {n:G.region}).n;
+  addLog('Mission started as ' + scName + ' in ' + rgName + '.', '');
+}
+
+/* ---------- RESOURCE BAR ---------- */
+function renderResBar() {
+  var r = G.res;
+  function sv(id, v) { var e = el(id); if (e) e.textContent = typeof v === 'number' ? Math.round(v) : v; }
+  function sw(id, w) { var e = el(id); if (e) e.style.width = Math.min(100, Math.max(0, w)) + '%'; }
+  sv('rv-seeds', r.seeds);
+  sv('rv-soil', r.soil); sw('rb-soil', r.soil);
+  sv('rv-poll', r.poll); sw('rb-poll', r.poll);
+  sv('rv-water', r.water); sw('rb-water', r.water);
+  sv('rv-comm', r.comm); sw('rb-comm', r.comm);
+  sv('rv-kp', G.research.points);
+  sv('rv-sov', r.sov);
+  var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+}
+
+function applyRes(delta) {
+  Object.keys(delta).forEach(function(k) {
+    if (G.res.hasOwnProperty(k)) {
+      var mx = (k === 'sov') ? 200 : (k === 'seeds' || k === 'know') ? 99999 : 100;
+      G.res[k] = clamp((G.res[k] || 0) + delta[k], 0, mx);
+    }
+  });
+  renderResBar();
+  updateHUD();
+}
+
+function updateTopBar() {
+  var yd = el('yearD'); if (yd) yd.textContent = G.year;
+  var sd = el('seasonD'); if (sd) sd.textContent = SEASONS[G.season];
+}
+
+/* ---------- SEASON ADVANCE ---------- */
+function advanceSeason() {
+  if (!G.started) return;
+  G.season = (G.season + 1) % 4;
+  if (G.season === 0) G.year++;
+  G.planted.forEach(function(p) { p.age = (p.age||0)+1; });
+  var nfix = G.planted.filter(function(p) { return ['alder','caragana','clover'].indexOf(p.sid)!==-1; }).length;
+  if (nfix > 0) applyRes({soil: nfix * 2});
+  var poll = G.planted.filter(function(p) { var s=spById(p.sid); return s&&s.provides&&s.provides.poll>5; }).length;
+  if (poll > 0) applyRes({poll: poll});
+  if (G.season === 0 || G.season === 2) applyRes({water: 18});
+  if (G.season === 1) applyRes({water: -Math.max(0, G.planted.length * 2 - 8)});
+  applyRes({sov: Math.floor(G.planted.length / 3)});
+  if (G.res.comm > 30) applyRes({sov: 1});
+  if (G.readSections.length > 0) {
+    G.research.points += 2;
+    var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+  }
+  G.evtTimer++;
+  updateTopBar();
+  renderResBar();
+  updateHUD();
+  checkEvents();
+  checkAchievements();
+  saveState();
+  addLog('\u23e9 Season advanced \u2192 Year ' + G.year + ' ' + SEASONS[G.season], '');
+}
+
+/* ---------- SECTION READ TRACKING ---------- */
+function markRead(key) {
+  if (G.readSections.indexOf(key) === -1) {
+    G.readSections.push(key);
+    G.research.points += 3;
+    var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+    updateHUD();
+    renderResearchGrid();
+    checkAchievements();
+    saveState();
+    floatNum('+3 \ud83d\udcda Knowledge Points', 'rgba(167,139,250,0.9)');
+  }
+}
+
+/* ---------- SPECIES PANEL ---------- */
+function renderSpPanel() {
+  var panel = el('spPanel');
+  if (!panel) return;
+  var sc = SCENARIOS.find(function(s) { return s.id === G.scenario; });
+  var avail = sc ? sc.sp.slice() : [];
+  var cats = [{id:'berry',n:'\ud83e\udec0 Berry Crops'},{id:'support',n:'\ud83c\udf3f Support Species'},{id:'tree',n:'\ud83c\udf4e Tree Fruits'}];
+  var html = '';
+  cats.forEach(function(cat) {
+    var items = SP.filter(function(s) { return s.cat === cat.id; });
+    html += '<div class="sp-cat"><div class="sp-cat-nm">' + cat.n + '</div>';
+    items.forEach(function(sp) {
+      var locked = avail.indexOf(sp.id) === -1;
+      html += '<div class="sp-item' + (G.selSp === sp.id ? ' sel' : '') + (locked ? ' locked' : '') +
+        '" onclick="' + (locked ? '' : 'selSp(\'' + sp.id + '\')') + '">' +
+        '<span>' + sp.em + '</span><span style="flex:1">' + sp.n + '</span>' +
+        (locked ? '<span class="sp-cost">\ud83d\udd12</span>' : '<span class="sp-cost">' + sp.cost + '\ud83c\udf31</span>') +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  panel.innerHTML = html;
+}
+
+function selSp(id) {
+  G.selSp = (G.selSp === id) ? null : id;
+  renderSpPanel();
+  if (G.selSp) {
+    var sp = spById(id);
+    addLog(sp.em + ' ' + sp.n + ' selected - click an orchard node to plant', '');
+  }
+}
+
+/* ---------- SPECIES MODAL ---------- */
+var _modalNode = null;
+
+function openSpModal(spId, nodeId) {
+  var sp = spById(spId);
+  if (!sp) return;
+  _modalNode = nodeId;
+  el('spmIco').textContent = sp.em;
+  el('spmNm').textContent = sp.n;
+  el('spmLat').textContent = sp.lat;
+  el('spmStats').innerHTML =
+    '<div class="spm-stat"><span class="spm-sv">' + sp.zone + '</span><span class="spm-sl">Zone</span></div>' +
+    '<div class="spm-stat"><span class="spm-sv">' + sp.ph + '</span><span class="spm-sl">pH</span></div>' +
+    '<div class="spm-stat"><span class="spm-sv">' + sp.yrs + ' yr</span><span class="spm-sl">Yield</span></div>';
+  el('spmDesc').textContent = sp.desc;
+  var syns = sp.syns || [];
+  el('spmSyn').innerHTML = syns.length ? syns.map(function(s) {
+    var chain = CC[s.ch];
+    var partner = spById(s.w);
+    return '<div class="spm-syn">' + (partner ? partner.em + ' ' + partner.n : 'Any') +
+      ' \u2192 ' + (chain ? chain.em + ' <b>' + chain.n + '</b>' : s.ch) + '</div>';
+  }).join('') : '<div style="font-family:var(--fu);font-size:.68rem;color:var(--tx3)">No specific synergies listed.</div>';
+  var already = plantedAt(nodeId);
+  var btn = el('spmPlantBtn');
+  if (btn) {
+    btn.textContent = (already ? '\ud83d\udd04 Replace (' : '\ud83c\udf31 Plant (') + sp.cost + ' \ud83c\udf31)';
+    btn.disabled = G.res.seeds < sp.cost;
+  }
+  el('spModal').classList.add('show');
+}
+
+function closeSpModal() {
+  el('spModal').classList.remove('show');
+  _modalNode = null;
+}
+
+function confirmPlant() {
+  if (!G.selSp || _modalNode === null) return;
+  var sp = spById(G.selSp);
+  if (!sp) return;
+  if (G.res.seeds < sp.cost) { alert('Not enough seeds!'); return; }
+  G.planted = G.planted.filter(function(p) { return p.nodeId !== _modalNode; });
+  G.planted.push({sid: G.selSp, nodeId: _modalNode, age: 0});
+  G.res.seeds -= sp.cost;
+  applyRes(sp.provides);
+  addLog(sp.em + ' ' + sp.n + ' planted at node ' + _modalNode, '');
+  floatNum(sp.em + ' Planted!', 'rgba(74,222,128,0.9)');
+  var plantedNode = _modalNode;
+  setTimeout(function() { checkCascades(plantedNode); }, 400);
+  closeSpModal();
+  G.selSp = null;
+  var ni = el('nodeInfo'); if (ni) ni.textContent = 'none';
+  G.selNode = null;
+  renderSpPanel();
+  saveState();
+  checkAchievements();
+  renderResBar();
+  updateHUD();
+  checkEvents();
+}
+
+function removePlant() {
+  if (G.selNode === null) { alert('Select a node first by clicking it in the orchard.'); return; }
+  var idx = G.planted.findIndex(function(p) { return p.nodeId === G.selNode; });
+  if (idx === -1) { alert('No plant at that node.'); return; }
+  var sp = spById(G.planted[idx].sid);
+  if (!confirm('Remove ' + sp.n + ' from node ' + G.selNode + '? You get a partial seed refund.')) return;
+  G.planted.splice(idx, 1);
+  G.res.seeds += Math.floor(sp.cost * 0.3);
+  addLog('\ud83d\uddd1 ' + sp.n + ' removed. Partial refund.', '');
+  G.selNode = null;
+  var ni = el('nodeInfo'); if (ni) ni.textContent = 'none';
+  renderResBar();
+  updateHUD();
+  saveState();
+}
+
+/* ---------- CASCADE COLLISION ENGINE ---------- */
+function plantedAt(nodeId) {
+  return G.planted.find(function(p) { return p.nodeId === nodeId; });
+}
+
+function checkCascades(newNodeId) {
+  var newP = plantedAt(newNodeId);
+  if (!newP) return;
+  var newSp = spById(newP.sid);
+  if (!newSp) return;
+  var adj = GRID_ADJ[newNodeId] || [];
+  adj.forEach(function(adjId) {
+    var adjP = plantedAt(adjId);
+    if (!adjP) return;
+    var adjSp = spById(adjP.sid);
+    if (!adjSp) return;
+    (newSp.syns || []).forEach(function(syn) {
+      if (syn.w === adjSp.id) fireCascade(syn.ch, newNodeId, adjId);
+    });
+    (adjSp.syns || []).forEach(function(syn) {
+      if (syn.w === newSp.id) fireCascade(syn.ch, adjId, newNodeId);
+    });
+  });
+}
+
+function fireCascade(chainId, fromNode, toNode) {
+  var chain = CC[chainId];
+  if (!chain) return;
+  var mult = 1;
+  if (G.research.unlocked.indexOf('cascade-1') !== -1) mult *= 1.10;
+  if (G.research.unlocked.indexOf('cascade-2') !== -1) mult *= 1.25;
+  if (G.research.unlocked.indexOf('mycorrhizal') !== -1) mult *= 1.15;
+  var bonus = {};
+  Object.keys(chain.bonus).forEach(function(k) {
+    bonus[k] = Math.round(chain.bonus[k] * mult);
+  });
+  applyRes(bonus);
+  G.res.cascades++;
+  G.chainC[chainId] = (G.chainC[chainId] || 0) + 1;
+  G.research.points += 3;
+  var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+  spawnParticles(fromNode, toNode, chain.col, 10);
+  spawnParticles(toNode, fromNode, chain.col, 6);
+  showCascadePopup(chain, bonus);
+  addLog(chain.em + ' ' + chain.n + ' triggered! ' + fmtBonus(bonus), 'cascade');
+  floatNum(chain.em + ' ' + chain.n, chain.col);
+  checkAchievements();
+  saveState();
+  renderResBar();
+  updateHUD();
+}
+
+function fmtBonus(b) {
+  return Object.keys(b).map(function(k) { return (b[k]>0?'+':'')+b[k]+' '+k; }).join(' \u00b7 ');
+}
+
+/* ---------- CASCADE POPUP ---------- */
+var _popTO = null;
+function showCascadePopup(chain, bonus) {
+  var p = el('cpop');
+  if (!p) return;
+  el('cpopNm').textContent = chain.em + ' ' + chain.n;
+  el('cpopChain').textContent = chain.ch.join(' \u2192 ');
+  el('cpopEffs').innerHTML = Object.keys(bonus).map(function(k) {
+    var v = bonus[k];
+    return '<span class="cpop-eff">' + k + ' <span style="color:' + (v>0?'var(--g1)':'var(--r1)') + '">' + (v>0?'+':'') + v + '</span></span>';
+  }).join('');
+  p.style.display = 'block';
+  if (_popTO) clearTimeout(_popTO);
+  _popTO = setTimeout(function() { p.style.display = 'none'; }, 3000);
+}
+
+/* ---------- CASCADE LOG ---------- */
+function addLog(msg, type) {
+  var c = el('clogEntries');
+  if (!c) return;
+  var d = document.createElement('div');
+  d.className = 'cl-e' + (type ? ' ' + type : '');
+  d.textContent = '[Y' + G.year + ' ' + SEASONS[G.season].substring(0,3) + '] ' + msg;
+  c.insertBefore(d, c.firstChild);
+  while (c.children.length > 40) c.removeChild(c.lastChild);
+}
+
+/* ---------- FLOAT NUMBERS ---------- */
+function floatNum(text, color) {
+  var layer = el('floatLayer');
+  if (!layer) return;
+  var d = document.createElement('div');
+  d.className = 'fl-num';
+  d.textContent = text;
+  d.style.color = color || 'rgba(74,222,128,0.9)';
+  d.style.left = (20 + Math.random() * 55) + '%';
+  d.style.top = (20 + Math.random() * 40) + '%';
+  layer.appendChild(d);
+  setTimeout(function() { if (d.parentNode) layer.removeChild(d); }, 2000);
+}
+
+/* ---------- EVENT SYSTEM ---------- */
+function checkEvents() {
+  if (G.evtTimer < 3) return;
+  var eligible = EV.filter(function(e) {
+    if (G.evtHistory.indexOf(e.id) !== -1) return false;
+    var t = e.trig;
+    if (t.yr && G.year < t.yr) return false;
+    if (t.sea !== undefined && t.sea !== G.season) return false;
+    if (t.comm && G.res.comm < t.comm) return false;
+    if (t.know && G.res.know < t.know) return false;
+    if (t.sov && G.res.sov < t.sov) return false;
+    if (t.planted && !G.planted.some(function(p) { return p.sid === t.planted; })) return false;
+    if (t.region && t.region !== G.region) return false;
+    if (t.research && G.research.unlocked.indexOf(t.research) === -1) return false;
+    return true;
+  });
+  if (!eligible.length) return;
+  if (Math.random() > 0.5) return;
+  G.evtTimer = 0;
+  var evt = eligible[Math.floor(Math.random() * eligible.length)];
+  showEvent(evt);
+}
+
+function showEvent(evt) {
+  el('evtIco').textContent = evt.em;
+  el('evtYr').textContent = 'Year ' + G.year + ' \u00b7 ' + SEASONS[G.season];
+  el('evtNm').textContent = evt.n;
+  el('evtDesc').textContent = evt.desc;
+  var ch = el('evtChoices');
+  ch.innerHTML = evt.choices.map(function(c, i) {
+    return '<button class="evt-choice" onclick="resolveEvent(\'' + evt.id + '\',' + i + ')">' +
+      '<b>' + c.lbl + '</b>' + c.eff + '</button>';
+  }).join('');
+  el('evtOverlay').classList.add('show');
+}
+
+function resolveEvent(evtId, idx) {
+  var evt = EV.find(function(e) { return e.id === evtId; });
+  if (!evt) return;
+  var choice = evt.choices[idx];
+  if (!choice) return;
+  if (choice.res) applyRes(choice.res);
+  if (G.evtHistory.indexOf(evtId) === -1) G.evtHistory.push(evtId);
+  G.research.points += 4;
+  var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+  addLog('\u26a1 ' + evt.n + ': "' + choice.lbl + '" - ' + choice.eff, 'event');
+  var h = el('evtHistory');
+  if (h) {
+    if (h.children.length === 0 || (h.children.length===0 && h.textContent.indexOf('No cascade')!==-1)) h.textContent = '';
+    var entry = document.createElement('div');
+    entry.style.cssText = 'font-family:var(--fu);font-size:.72rem;color:var(--tx2);padding:.42rem 0;border-bottom:1px solid var(--bdr)';
+    var yrSpan = document.createElement('span');
+    yrSpan.style.cssText = 'color:var(--a1);font-size:.62rem';
+    yrSpan.textContent = 'Y' + G.year + ' ' + SEASONS[G.season];
+    entry.appendChild(yrSpan);
+    entry.appendChild(document.createElement('br'));
+    var b = document.createElement('strong');
+    b.textContent = evt.n;
+    entry.appendChild(b);
+    entry.appendChild(document.createTextNode(' - ' + choice.lbl));
+    entry.appendChild(document.createElement('br'));
+    var small = document.createElement('span');
+    small.style.cssText = 'font-size:.68rem;color:var(--tx3)';
+    small.textContent = choice.eff;
+    entry.appendChild(small);
+    h.insertBefore(entry, h.firstChild);
+  }
+  el('evtOverlay').classList.remove('show');
+  floatNum(evt.em + ' Event resolved!', 'rgba(245,158,11,0.9)');
+  checkAchievements();
+  renderResBar();
+  saveState();
+}
+
+/* ---------- RESEARCH GRID ---------- */
+function renderResearchGrid() {
+  var g = el('researchGrid');
+  if (!g) return;
+  if (!G.started) return;
+  var unlocked = G.research.unlocked;
+  var html = RS.map(function(r) {
+    var isUnlocked = unlocked.indexOf(r.id) !== -1;
+    var isAvail = r.avail;
+    RS.forEach(function(other) {
+      if (unlocked.indexOf(other.id) !== -1 && other.unlocks && other.unlocks.indexOf(r.id) !== -1) isAvail = true;
+    });
+    var canAfford = G.research.points >= r.cost;
+    var cls = isUnlocked ? 'unlocked' : isAvail ? 'available' : 'locked';
+    var actionHtml;
+    if (isUnlocked) actionHtml = '';
+    else if (isAvail && canAfford) actionHtml = '<button class="btn btn-p" style="font-size:.66rem;width:100%" onclick="unlockResearch(\'' + r.id + '\')">Unlock</button>';
+    else if (isAvail) actionHtml = '<div style="font-family:var(--fu);font-size:.64rem;color:var(--tx3)">Need ' + r.cost + ' KP (have ' + G.research.points + ')</div>';
+    else actionHtml = '<div style="font-family:var(--fu);font-size:.64rem;color:var(--tx3)">Complete prerequisite research first</div>';
+    return '<div class="res-card ' + cls + '">' +
+      '<div class="rc-tier">Tier ' + r.tier + '</div>' +
+      '<div class="rc-nm ' + cls + '">' + r.n + (isUnlocked ? ' \u2713' : '') + '</div>' +
+      '<div class="rc-desc">' + r.desc + '</div>' +
+      '<div class="rc-cost">' + (isUnlocked ? '\u2713 Unlocked' : 'Cost: ' + r.cost + ' KP') + '</div>' +
+      actionHtml + '</div>';
+  }).join('');
+  g.innerHTML = html;
+}
+
+function unlockResearch(id) {
+  var r = RS.find(function(r) { return r.id === id; });
+  if (!r) return;
+  if (G.research.points < r.cost) { alert('Not enough Knowledge Points.'); return; }
+  G.research.points -= r.cost;
+  if (G.research.unlocked.indexOf(id) === -1) G.research.unlocked.push(id);
+  applyRes({sov: 8, know: 6});
+  floatNum('\ud83d\udd2c ' + r.n + ' unlocked!', 'rgba(34,211,238,0.9)');
+  addLog('\ud83d\udd2c Research unlocked: ' + r.n, '');
+  renderResearchGrid();
+  renderSpPanel();
+  checkAchievements();
+  saveState();
+  var kd = el('kpDisplay'); if (kd) kd.textContent = G.research.points;
+}
+
+/* ---------- ACHIEVEMENTS ---------- */
+function checkAchievements() {
+  AH.forEach(function(a) {
+    if (!a.done && a.cond()) {
+      a.done = true;
+      if (G.achievements.indexOf(a.id) === -1) G.achievements.push(a.id);
+      addLog('\ud83c\udfc6 Achievement unlocked: ' + a.n, 'achieve');
+      floatNum('\ud83c\udfc6 ' + a.n, 'rgba(167,139,250,0.9)');
+    }
+  });
+  renderAchievements();
+}
+
+function renderAchievements() {
+  var g = el('achGrid');
+  if (!g) return;
+  g.innerHTML = AH.map(function(a) {
+    var earned = G.achievements.indexOf(a.id) !== -1 || a.done;
+    return '<div class="ach-card ' + (earned ? 'earned' : '') + '">' +
+      '<div class="ach-ico">' + a.em + '</div>' +
+      '<div class="ach-nm">' + a.n + '</div>' +
+      '<div class="ach-desc">' + a.desc + '</div></div>';
+  }).join('');
+}
+
+/* ---------- HUD UPDATE ---------- */
+function updateHUD() {
+  var pc = G.planted.length, pt = 12;
+  var sc = G.readSections.length, st = 18;
+  var sov = G.res.sov;
+  var hp = el('hudPlanted'); if (hp) hp.textContent = pc + '/' + pt;
+  var hpb = el('hudPlantedB'); if (hpb) hpb.style.width = Math.round(pc/pt*100) + '%';
+  var hc = el('hudCascades'); if (hc) hc.textContent = G.res.cascades;
+  var hs = el('hudSections'); if (hs) hs.textContent = sc + '/' + st;
+  var hsv = el('hudSov'); if (hsv) hsv.textContent = Math.round(sov);
+  var hsvb = el('hudSovB'); if (hsvb) hsvb.style.width = Math.min(100, Math.round(sov/100*100)) + '%';
+  function bdg(id, on) { var e = el(id); if (e) e.classList.toggle('on', on); }
+  bdg('b-reader', sc >= 5);
+  bdg('b-planter', pc >= 4);
+  bdg('b-cascader', G.res.cascades >= 5);
+  bdg('b-sovereign', sov >= 50);
+}
+
+/* ---------- ORCHARD CANVAS ---------- */
+var orchCvs, orchCtx, orchW, orchH;
+var orchParticles = [];
+var orchAnimRunning = false;
+
+function initOrchardCanvas() {
+  orchCvs = el('orchCvs');
+  if (!orchCvs) return;
+  orchCtx = orchCvs.getContext('2d');
+  function rsz() {
+    orchW = orchCvs.clientWidth;
+    orchH = orchCvs.clientWidth;
+    orchCvs.width = orchW * 2;
+    orchCvs.height = orchH * 2;
+    orchCtx.setTransform(2,0,0,2,0,0);
+  }
+  rsz();
+  window.addEventListener('resize', rsz);
+  orchCvs.addEventListener('click', function(e) {
+    var rect = orchCvs.getBoundingClientRect();
+    var mx = (e.clientX - rect.left) / rect.width;
+    var my = (e.clientY - rect.top) / rect.height;
+    handleOrchClick(mx, my);
+  });
+  if (!orchAnimRunning) {
+    orchAnimRunning = true;
+    (function loop() {
+      requestAnimationFrame(loop);
+      renderOrchard();
+    })();
+  }
+}
+
+function nodePos(node) {
+  return {x: node.x * orchW, y: node.y * orchH};
+}
+
+function handleOrchClick(mx, my) {
+  var best = null, bestDist = 999;
+  GRID_NODES.forEach(function(n) {
+    var dx = n.x - mx, dy = n.y - my;
+    var d = Math.sqrt(dx*dx + dy*dy);
+    if (d < bestDist) { bestDist = d; best = n; }
+  });
+  if (!best || bestDist > 0.1) return;
+  G.selNode = best.id;
+  var p = plantedAt(best.id);
+  var ni = el('nodeInfo');
+  if (ni) ni.textContent = 'Node ' + best.id + (p ? ' - ' + spById(p.sid).n : ' - empty');
+  if (G.selSp) openSpModal(G.selSp, best.id);
+}
+
+function spawnParticles(fromId, toId, color, count) {
+  if (!orchW) return;
+  var a = nodePos(GRID_NODES[fromId]);
+  var b = nodePos(GRID_NODES[toId]);
+  for (var i = 0; i < count; i++) {
+    orchParticles.push({x0:a.x, y0:a.y, x1:b.x, y1:b.y, t: i/count*0.4, color: color||'#4ade80'});
+  }
+}
+
+function renderOrchard() {
+  if (!orchCtx || !orchW) return;
+  orchCtx.clearRect(0, 0, orchW, orchH);
+  for (var r = 0; r < 4; r++) {
+    for (var c = 0; c < 3; c++) {
+      var id = r*3+c;
+      if (c < 2) drawEdge(id, id+1);
+      if (r < 3) drawEdge(id, id+3);
+    }
+  }
+  var alive = [];
+  orchParticles.forEach(function(p) {
+    p.t += 0.025;
+    if (p.t > 1) return;
+    var x = p.x0 + (p.x1-p.x0)*p.t;
+    var y = p.y0 + (p.y1-p.y0)*p.t;
+    var alpha = 1 - Math.abs(p.t - 0.5)*2;
+    orchCtx.beginPath();
+    orchCtx.arc(x, y, 4*alpha+1, 0, Math.PI*2);
+    orchCtx.fillStyle = hexToRgba(p.color, alpha);
+    orchCtx.fill();
+    alive.push(p);
+  });
+  orchParticles = alive;
+  GRID_NODES.forEach(function(n) {
+    var pos = nodePos(n);
+    var p = plantedAt(n.id);
+    var sel = G.selNode === n.id;
+    var rad = 17;
+    if (p) {
+      var sp = spById(p.sid);
+      orchCtx.beginPath(); orchCtx.arc(pos.x, pos.y, rad+6, 0, Math.PI*2);
+      orchCtx.fillStyle = sp.cat === 'tree' ? 'rgba(34,211,238,0.1)' : 'rgba(74,222,128,0.1)';
+      orchCtx.fill();
+      orchCtx.beginPath(); orchCtx.arc(pos.x, pos.y, rad, 0, Math.PI*2);
+      orchCtx.fillStyle = sp.cat === 'tree' ? 'rgba(34,211,238,0.15)' : sp.cat === 'support' ? 'rgba(245,158,11,0.15)' : 'rgba(74,222,128,0.15)';
+      orchCtx.fill();
+      orchCtx.strokeStyle = sp.cat === 'tree' ? 'rgba(34,211,238,0.7)' : sp.cat === 'support' ? 'rgba(245,158,11,0.7)' : 'rgba(74,222,128,0.7)';
+      orchCtx.lineWidth = sel ? 3 : 1.5; orchCtx.stroke();
+      orchCtx.font = '17px serif'; orchCtx.textAlign = 'center'; orchCtx.textBaseline = 'middle';
+      orchCtx.fillText(sp.em, pos.x, pos.y);
+    } else {
+      orchCtx.beginPath(); orchCtx.arc(pos.x, pos.y, rad, 0, Math.PI*2);
+      orchCtx.fillStyle = sel ? 'rgba(74,222,128,0.1)' : 'rgba(74,222,128,0.03)';
+      orchCtx.fill();
+      orchCtx.strokeStyle = sel ? 'rgba(74,222,128,0.6)' : 'rgba(74,222,128,0.2)';
+      orchCtx.lineWidth = sel ? 2.5 : 1; orchCtx.stroke();
+      orchCtx.font = '9px Verdana'; orchCtx.textAlign = 'center'; orchCtx.textBaseline = 'middle';
+      orchCtx.fillStyle = 'rgba(74,222,128,0.35)';
+      orchCtx.fillText(n.id, pos.x, pos.y);
+    }
+  });
+}
+
+function drawEdge(aId, bId) {
+  var a = nodePos(GRID_NODES[aId]), b = nodePos(GRID_NODES[bId]);
+  var both = plantedAt(aId) && plantedAt(bId);
+  orchCtx.beginPath(); orchCtx.moveTo(a.x, a.y); orchCtx.lineTo(b.x, b.y);
+  orchCtx.strokeStyle = both ? 'rgba(74,222,128,0.25)' : 'rgba(74,222,128,0.07)';
+  orchCtx.lineWidth = both ? 1.8 : 0.8; orchCtx.stroke();
+}
+
+function hexToRgba(hex, alpha) {
+  if (hex && hex.charAt(0) === '#') {
+    var rr = parseInt(hex.slice(1,3),16), gg = parseInt(hex.slice(3,5),16), bb = parseInt(hex.slice(5,7),16);
+    return 'rgba('+rr+','+gg+','+bb+','+alpha+')';
+  }
+  return hex;
+}
+
+/* ---------- CONSTELLATION CANVAS ---------- */
+var conNodes = [
+  {lbl:'Berries',key:'berries',a:270,r:44},{lbl:'Trees',key:'species',a:330,r:44},
+  {lbl:'Soil',key:'soil',a:30,r:44},{lbl:'Ecology',key:'wildlife',a:90,r:44},
+  {lbl:'Community',key:'training',a:150,r:44},{lbl:'Cascade',key:'orchard',a:210,r:44}
+];
+var conCvsEl, conCtx, conTime=0;
+
+function initConstellation() {
+  conCvsEl = el('conCvs');
+  if (!conCvsEl) return;
+  conCtx = conCvsEl.getContext('2d');
+  (function loop() {
+    requestAnimationFrame(loop);
+    conTime += 0.008;
+    renderConstellation();
+  })();
+}
+
+function nodeActive(cn) {
+  return G.readSections.indexOf(cn.key) !== -1;
+}
+
+function renderConstellation() {
+  if (!conCtx) return;
+  var cx = 60, cy = 60;
+  conCtx.clearRect(0, 0, 120, 120);
+  var pos = conNodes.map(function(n) {
+    var rad = n.a * Math.PI / 180;
+    return {x: cx + Math.cos(rad)*n.r, y: cy + Math.sin(rad)*n.r, on: nodeActive(n)};
+  });
+  for (var i = 0; i < pos.length; i++) {
+    for (var j = i+1; j < pos.length; j++) {
+      if (pos[i].on && pos[j].on) {
+        conCtx.beginPath(); conCtx.moveTo(pos[i].x, pos[i].y); conCtx.lineTo(pos[j].x, pos[j].y);
+        conCtx.strokeStyle = 'rgba(74,222,128,0.28)'; conCtx.lineWidth = 1; conCtx.stroke();
+      }
+    }
+  }
+  var rdy = G.readSections.length / 18;
+  conCtx.beginPath(); conCtx.arc(cx, cy, 12, 0, Math.PI*2*rdy);
+  conCtx.strokeStyle = 'rgba(74,222,128,0.6)'; conCtx.lineWidth = 2; conCtx.stroke();
+  conCtx.beginPath(); conCtx.arc(cx, cy, 4, 0, Math.PI*2);
+  conCtx.fillStyle = 'rgba(74,222,128,0.85)'; conCtx.fill();
+  pos.forEach(function(p, i) {
+    if (p.on) {
+      var pulse = Math.sin(conTime*2 + i*1.2)*0.5+0.5;
+      conCtx.beginPath(); conCtx.arc(p.x, p.y, 6*pulse+3, 0, Math.PI*2);
+      conCtx.fillStyle = 'rgba(74,222,128,0.08)'; conCtx.fill();
+    }
+    conCtx.beginPath(); conCtx.arc(p.x, p.y, p.on?4:2.3, 0, Math.PI*2);
+    conCtx.fillStyle = p.on ? 'rgba(74,222,128,0.9)' : 'rgba(74,222,128,0.18)'; conCtx.fill();
+    conCtx.font = '6px Verdana'; conCtx.textAlign = 'center'; conCtx.textBaseline = 'top';
+    conCtx.fillStyle = p.on ? 'rgba(74,222,128,0.8)' : 'rgba(148,163,184,0.3)';
+    var n = conNodes[i], rd = n.a*Math.PI/180;
+    conCtx.fillText(n.lbl, cx+Math.cos(rd)*(n.r+11), cy+Math.sin(rd)*(n.r+11));
+  });
+}
+
+/* ---------- BACKGROUND: STARS + AURORA ---------- */
+var bgCvs, bgCtx, bgStars = [], bgTime = 0;
+
+function initBg() {
+  bgCvs = el('bgCanvas');
+  if (!bgCvs) return;
+  bgCtx = bgCvs.getContext('2d');
+  function rsz() { bgCvs.width = window.innerWidth; bgCvs.height = window.innerHeight; }
+  rsz();
+  window.addEventListener('resize', rsz);
+  for (var i = 0; i < 100; i++) {
+    bgStars.push({x:Math.random(), y:Math.random(), s:Math.random()*1.4+0.3, b:Math.random(), t:Math.random()*0.016+0.004});
+  }
+  (function loop() {
+    requestAnimationFrame(loop);
+    bgTime += 0.004;
+    var w = bgCvs.width, h = bgCvs.height;
+    bgCtx.clearRect(0, 0, w, h);
+    for (var b = 0; b < 3; b++) {
+      var ph = bgTime + b*1.3;
+      var yb = h*0.12 + Math.sin(ph*0.28)*h*0.04 + b*h*0.035;
+      var al = 0.012 + Math.sin(bgTime+b)*0.006;
+      var g = bgCtx.createLinearGradient(0, yb, 0, yb+h*0.13);
+      if (b===0) { g.addColorStop(0,'rgba(34,197,94,'+al+')'); g.addColorStop(0.5,'rgba(74,222,128,'+(al*1.5)+')'); g.addColorStop(1,'rgba(34,197,94,0)'); }
+      else if (b===1) { g.addColorStop(0,'rgba(34,211,238,'+al+')'); g.addColorStop(0.5,'rgba(103,232,249,'+(al*1.4)+')'); g.addColorStop(1,'rgba(34,211,238,0)'); }
+      else { g.addColorStop(0,'rgba(74,222,128,'+(al*0.7)+')'); g.addColorStop(0.5,'rgba(167,243,208,'+al+')'); g.addColorStop(1,'rgba(74,222,128,0)'); }
+      bgCtx.fillStyle = g; bgCtx.fillRect(0, yb, w, h*0.14);
+    }
+    bgStars.forEach(function(st) {
+      st.b += st.t * (Math.random()>0.5?1:-1);
+      st.b = Math.max(0.06, Math.min(1, st.b));
+      bgCtx.beginPath(); bgCtx.arc(st.x*w, st.y*h, st.s, 0, Math.PI*2);
+      bgCtx.fillStyle = 'rgba(226,232,240,'+(st.b*0.52)+')'; bgCtx.fill();
+    });
+  })();
+}
+
+/* ---------- SEARCH ---------- */
+var srchTO = null;
+function doSearch(q) {
+  clearTimeout(srchTO);
+  srchTO = setTimeout(function() {
+    q = q.trim().toLowerCase();
+    document.querySelectorAll('.cs').forEach(function(s) {
+      if (!q) { s.style.display = ''; return; }
+      s.style.display = s.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+    });
+  }, 220);
+}
+
+/* ---------- IN-PAGE SECTION NAV ----------
+   Named goSection (NOT scrollTo) deliberately: window.scrollTo is a native
+   browser API, and a global function named scrollTo would silently override
+   it, breaking the browser's own anchor-scroll behaviour in hard-to-diagnose
+   ways. Never name a global function/variable after an existing native
+   Window/Element/Document property. */
+function goSection(id) {
+  var target = document.getElementById(id);
+  if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  return false;
+}
+
+/* ---------- NOTES ---------- */
+var _noteRL = false;
+function saveNote() {
+  if (_noteRL) { alert('Please wait a moment before saving another note.'); return; }
+  var inp = el('noteInp');
+  if (!inp) return;
+  var raw = inp.value.trim();
+  if (!raw) return;
+  if (raw.length > 2000) { alert('Note too long - max 2000 characters.'); return; }
+  G.notes.unshift({id: Date.now(), text: san(raw), date: new Date().toLocaleString('en-CA')});
+  saveState();
+  inp.value = '';
+  var cc = el('noteCnt'); if (cc) cc.textContent = '0';
+  renderNotes();
+  floatNum('\ud83d\udcbe Note saved', 'rgba(74,222,128,0.9)');
+  _noteRL = true;
+  setTimeout(function() { _noteRL = false; }, 5000);
+}
+
+function renderNotes() {
+  var con = el('notesOut');
+  if (!con) return;
+  if (!G.notes.length) {
+    con.innerHTML = '<div style="font-family:var(--fu);font-size:.72rem;color:var(--tx3);text-align:center;padding:.8rem">No notes yet. Record your first field observation above.</div>';
+    return;
+  }
+  con.innerHTML = G.notes.slice(0, 50).map(function(n) {
+    return '<div class="note-entry"><div class="note-date">' + n.date + '</div><div class="note-text">' + n.text + '</div></div>';
+  }).join('');
+}
+
+function clearNotes() {
+  if (!confirm('Delete all logbook entries? This cannot be undone.')) return;
+  G.notes = [];
+  saveState();
+  renderNotes();
+}
+
+/* ---------- SETTINGS ---------- */
+function saveSetting(k, v) {
+  G.settings[k] = san(v);
+  saveState();
+}
+
+/* ---------- EXPORT / IMPORT ---------- */
+function expData() {
+  var data = {
+    exportDate: new Date().toISOString(),
+    platform: 'NL Food Sovereignty Orchard Mission v2.1',
+    scenario: G.scenario, region: G.region,
+    year: G.year, season: G.season, res: G.res,
+    planted: G.planted, readSections: G.readSections,
+    research: G.research, achievements: G.achievements,
+    evtHistory: G.evtHistory, chainC: G.chainC,
+    notes: G.notes, settings: G.settings
+  };
+  var bl = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  var u = URL.createObjectURL(bl);
+  var a = document.createElement('a');
+  a.href = u;
+  a.download = 'nl-orchard-mission-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(u);
+}
+
+function impData(inp) {
+  var f = inp.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function(e) {
+    try {
+      var d = JSON.parse(e.target.result);
+      if (!d.platform || d.platform.indexOf('NL Food Sovereignty') === -1) { alert('Unrecognised file format.'); return; }
+      if (!confirm('Import data from ' + (d.exportDate || 'unknown date') + '? This will overwrite current session data.')) return;
+      if (d.scenario) G.scenario = d.scenario;
+      if (d.region) G.region = d.region;
+      if (d.year) G.year = d.year;
+      if (d.season !== undefined) G.season = d.season;
+      if (d.res) G.res = d.res;
+      if (d.planted) G.planted = d.planted;
+      if (d.readSections) G.readSections = d.readSections;
+      if (d.research) G.research = d.research;
+      if (d.achievements) G.achievements = d.achievements;
+      if (d.evtHistory) G.evtHistory = d.evtHistory;
+      if (d.chainC) G.chainC = d.chainC;
+      if (d.notes) G.notes = d.notes;
+      if (d.settings) G.settings = d.settings;
+      G.started = true;
+      saveState();
+      activateGame();
+      alert('Import successful.');
+    } catch (err) {
+      alert('Could not parse import file. Please use a valid export from this platform.');
+    }
+  };
+  rd.readAsText(f);
+}
+
+/* ---------- RESET ---------- */
+function resetAll() {
+  if (!confirm('Delete ALL local data - progress, notes, achievements, and settings?\n\nThis cannot be undone.')) return;
+  G.scenario = null; G.region = 'avalon';
+  G.year = 1; G.season = 0;
+  G.res = {seeds:0, soil:0, poll:0, water:0, comm:0, sov:0, know:0, cascades:0};
+  G.planted = []; G.readSections = [];
+  G.research = {unlocked:[], points:0};
+  G.achievements = []; G.evtHistory = []; G.evtTimer = 0;
+  G.chainC = {}; G.notes = []; G.settings = {};
+  G.started = false;
+  saveState();
+  dbSet('advkey', '');
+  location.reload();
+}
+
+/* ---------- ADVISOR (Claude API - optional, user-supplied key) ---------- */
+function saveAdvKey() {
+  var k = el('advKey').value.trim();
+  if (!k) { alert('Please enter an API key first.'); return; }
+  G.advKey = k;
+  dbSet('advkey', k);
+  floatNum('\ud83d\udd11 Key saved locally', 'rgba(74,222,128,0.9)');
+}
+function clearAdvKey() {
+  G.advKey = '';
+  el('advKey').value = '';
+  dbSet('advkey', '');
+  floatNum('\ud83d\udd11 Key cleared', 'rgba(251,113,133,0.9)');
+}
+
+var _advRL = false;
+function askAdvisor() {
+  if (_advRL) { alert('Please wait a moment before asking again.'); return; }
+  var q = el('advQ').value.trim();
+  if (!q) { alert('Please enter a question first.'); return; }
+  if (!G.advKey) { alert('Please save your Anthropic API key first (see the field above).'); return; }
+  var respEl = el('advResponse');
+  respEl.textContent = 'Thinking...';
+  var context = buildAdvisorContext();
+  var fullPrompt = context + '\n\nUser question: ' + q;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': G.advKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 500,
+      messages: [{role: 'user', content: fullPrompt}]
+    })
+  }).then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.content && data.content[0] && data.content[0].text) {
+        respEl.textContent = data.content[0].text;
+      } else if (data.error) {
+        respEl.textContent = 'Error: ' + (data.error.message || 'Unknown API error. Check your API key.');
+      } else {
+        respEl.textContent = 'No response received. Please check your API key and try again.';
+      }
+    })
+    .catch(function(err) {
+      respEl.textContent = 'Request failed: ' + err.message + '. This may be a network or CORS restriction - the Advisor feature requires direct browser access to the Anthropic API, which may not work in all environments.';
+    });
+  _advRL = true;
+  setTimeout(function() { _advRL = false; }, 4000);
+}
+
+function buildAdvisorContext() {
+  var plantedList = G.planted.map(function(p) {
+    var sp = spById(p.sid);
+    return sp ? sp.n : p.sid;
+  }).join(', ') || 'nothing yet';
+  var sc = SCENARIOS.find(function(s) { return s.id === G.scenario; });
+  var rg = REGIONS.find(function(r) { return r.id === G.region; });
+  return 'You are an Orchard Advisor for a Newfoundland and Labrador food sovereignty simulation game. ' +
+    'Current game state: Scenario=' + (sc?sc.n:G.scenario) + ', Region=' + (rg?rg.n:G.region) + ', Year=' + G.year + ' ' + SEASONS[G.season] + '. ' +
+    'Resources: Seeds=' + Math.round(G.res.seeds) + ', Soil=' + Math.round(G.res.soil) + ', Pollinator=' + Math.round(G.res.poll) + ', Water=' + Math.round(G.res.water) + ', Community=' + Math.round(G.res.comm) + ', Sovereignty=' + Math.round(G.res.sov) + ', Cascades triggered=' + G.res.cascades + '. ' +
+    'Planted species: ' + plantedList + '. ' +
+    'Give brief, specific, encouraging advice (3-5 sentences) about what to plant or do next, grounded in real Newfoundland horticultural practice where relevant.';
+}
+
+/* ---------- SCROLL REVEAL ---------- */
+function initReveal() {
+  var els = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(en) {
+        if (en.isIntersecting) { en.target.classList.add('vis'); obs.unobserve(en.target); }
+      });
+    }, {threshold: 0.04});
+    els.forEach(function(elx) { obs.observe(elx); });
+  } else {
+    els.forEach(function(elx) { elx.classList.add('vis'); });
+  }
+}
+
+/* ---------- INIT ---------- */
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var s = el('splash');
+    if (s) s.classList.add('gone');
+  }, 2200);
+  initBg();
+  initConstellation();
+  initReveal();
+  loadState();
+});
+</script>
+</body>
+</html>
